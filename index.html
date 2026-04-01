@@ -454,11 +454,15 @@ async function testConn() {
 }
 
 // ── API ──
-function callGS(params) {
+function callGS(params, timeoutMs = 15000) {
   const qs = Object.entries(params).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v ?? '')).join('&');
-  return fetch(gsUrl + '?' + qs, { redirect: 'follow' })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .catch(err => { console.warn('GS:', err); return {}; });
+  const fetchP = fetch(gsUrl + '?' + qs, { redirect: 'follow' })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  const timeoutP = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('⏱ หมดเวลา — Apps Script ตอบช้าเกิน ' + (timeoutMs/1000) + ' วินาที')), timeoutMs)
+  );
+  return Promise.race([fetchP, timeoutP])
+    .catch(err => { console.warn('GS:', err.message); throw err; });
 }
 
 // ── META (months, objectives) ──
@@ -488,7 +492,12 @@ async function loadMeta() {
     const match = [...selO.options].find(o => o.value === curO);
     if (match) selO.value = curO;
 
-  } catch(e) { setConn(false); }
+  } catch(e) {
+    setConn(false);
+    console.error('loadMeta error:', e.message);
+    document.getElementById('tbl-body').innerHTML =
+      '<tr><td colspan="11"><div class="empty">❌ ' + e.message + '<br><small>ตรวจสอบ URL Apps Script หรือ Deploy ใหม่</small></div></td></tr>';
+  }
 }
 
 // ── LOAD REPORT ──
