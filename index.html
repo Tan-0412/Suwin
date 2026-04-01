@@ -386,11 +386,10 @@ function ok(data) {
               <th>ผู้บันทึกเริ่ม</th>
               <th>วันเวลาจบบันทึก</th>
               <th>ผู้บันทึกจบ</th>
-              <th>Year-Month</th>
             </tr>
           </thead>
           <tbody id="tbl-body">
-            <tr><td colspan="12"><div class="loader"><div class="loader-spin"></div><br>กำลังโหลด...</div></td></tr>
+            <tr><td colspan="11"><div class="loader"><div class="loader-spin"></div><br>กำลังโหลด...</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -499,7 +498,7 @@ async function loadReport() {
   if (!month) return;
 
   document.getElementById('tbl-body').innerHTML =
-    '<tr><td colspan="12"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
+    '<tr><td colspan="11"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
 
   try {
     const params = { action: 'getData', month };
@@ -513,7 +512,7 @@ async function loadReport() {
   } catch(e) {
     setConn(false);
     document.getElementById('tbl-body').innerHTML =
-      '<tr><td colspan="12"><div class="empty">❌ ดึงข้อมูลไม่ได้ — ' + e.message + '</div></td></tr>';
+      '<tr><td colspan="11"><div class="empty">❌ ดึงข้อมูลไม่ได้ — ' + e.message + '</div></td></tr>';
   }
 }
 
@@ -535,7 +534,7 @@ function renderTable() {
 
   if (filteredRows.length === 0) {
     document.getElementById('tbl-body').innerHTML =
-      '<tr><td colspan="12"><div class="empty">📭 ไม่พบข้อมูลที่ตรงกับเงื่อนไข</div></td></tr>';
+      '<tr><td colspan="11"><div class="empty">📭 ไม่พบข้อมูลที่ตรงกับเงื่อนไข</div></td></tr>';
     return;
   }
 
@@ -573,8 +572,8 @@ function renderTable() {
 // ── STATS ──
 function updateStats() {
   const total  = allRows.length;
-  const inCnt  = allRows.filter(r => (r['ประเภทเข้าออก']||r['ประเภท']||'').includes('เข้า')).length;
-  const outCnt = allRows.filter(r => (r['ประเภทเข้าออก']||r['ประเภท']||'').includes('ออก')).length;
+  const inCnt  = allRows.filter(r => (findCol(r,'ประเภทเข้าออก','ประเภท')||'').includes('เข้า')).length;
+  const outCnt = allRows.filter(r => (findCol(r,'ประเภทเข้าออก','ประเภท')||'').includes('ออก')).length;
   const plates = new Set(allRows.map(r => r['ทะเบียนรถ']).filter(Boolean)).size;
   const days   = new Set(allRows.map(r => (r['วันที่']||'').split(' ')[0]).filter(Boolean)).size;
 
@@ -668,12 +667,9 @@ body{font-family:'Sarabun',sans-serif;background:#e8ecf0;color:#111;font-size:11
 .a4-content{width:100%;}
 
 /* ── report header ── */
-.rh-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1mm;}
+.rh-row1{display:flex;align-items:flex-start;margin-bottom:1mm;}
 .rh-main-title{font-size:14pt;font-weight:700;color:#0D2137;border-bottom:2.5px solid #1565C0;padding-bottom:1mm;}
-.rh-ym-badge{
-  background:#FFD600;color:#000;font-size:11pt;font-weight:700;
-  padding:2px 10px;border-radius:4px;letter-spacing:.5px;white-space:nowrap;
-}
+
 .rh-company{font-size:11pt;font-weight:600;color:#1565C0;margin-bottom:2mm;}
 .rh-row3{
   display:flex;justify-content:space-between;align-items:center;
