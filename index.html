@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>รายงานการเข้าออก — บริษัท อีซูซุดิงสยนต์</title>
+<title>รายงานการเข้าออก — บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -138,7 +138,7 @@ tr:hover td{background:#f7fafc;}
     <div class="tb-logo">📋</div>
     <div class="tb-title">
       <h1>รายงานบันทึกการเข้าออก</h1>
-      <p>บริษัท อีซูซุดิงสยนต์ จำกัด (สาขาสุวินทวงศ์)</p>
+      <p>บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</p>
     </div>
   </div>
   <div class="tb-conn">
@@ -187,11 +187,19 @@ function getData(p) {
   // หาแถว header (แถวที่มี "วันที่" เป็น cell แรกที่ไม่ว่าง)
   let hdrRow = -1;
   for (let i = 0; i < Math.min(10, data.length); i++) {
-    if (String(data[i][0]).includes('วันที่') || String(data[i][0]).trim() === 'วันที่') {
+    const row = data[i].map(c => String(c).trim());
+    if (row.some(c => c === 'วันที่' || c.includes('วันที่บันทึก') || c.includes('ทะเบียน'))) {
       hdrRow = i; break;
     }
   }
-  if (hdrRow < 0) hdrRow = 2; // fallback แถวที่ 3 (index 2)
+  if (hdrRow < 0) {
+    // fallback: หา row ที่มี cell ไม่ว่างมากที่สุดใน 5 แถวแรก
+    let maxFilled = 0;
+    for (let i = 0; i < Math.min(5, data.length); i++) {
+      const filled = data[i].filter(c => c !== '' && c !== null).length;
+      if (filled > maxFilled) { maxFilled = filled; hdrRow = i; }
+    }
+  }
   const hdrs = data[hdrRow].map(h => String(h).trim());
 
   const rows = data.slice(hdrRow + 1).map(r => {
@@ -205,7 +213,7 @@ function getData(p) {
       }
     });
     return o;
-  }).filter(r => r['วันที่'] && r['วันที่'] !== '');
+  }).filter(r => { const v = r['วันที่']||''; return v && v !== '' && v !== '—'; });
 
   // filter ตาม month และ objective ถ้าส่งมา
   let filtered = rows;
@@ -216,7 +224,11 @@ function getData(p) {
     });
   }
   if (p.obj && p.obj !== 'ALL') {
-    filtered = filtered.filter(r => String(r['วัตถุประสงค์']).includes(p.obj));
+    const objQ = String(p.obj).trim().toLowerCase();
+    filtered = filtered.filter(r => {
+      const val = String(r['วัตถุประสงค์'] || r['วัตถุ'] || '').trim().toLowerCase();
+      return val === objQ || val.includes(objQ);
+    });
   }
 
   // เรียงตามวันเวลาเริ่มบันทึก น้อย→มาก
@@ -239,8 +251,8 @@ function getMeta() {
     if (String(data[i][0]).includes('วันที่')) { hdrRow = i; break; }
   }
   const hdrs = data[hdrRow].map(h => String(h).trim());
-  const ymIdx = hdrs.indexOf('วันที่');
-  const objIdx = hdrs.indexOf('วัตถุประสงค์');
+  const ymIdx = hdrs.findIndex(h => h.includes('วันที่'));
+  const objIdx = hdrs.findIndex(h => h.includes('วัตถุ'));
 
   const months = new Set();
   const objectives = new Set();
@@ -512,9 +524,9 @@ function renderTable() {
     const grp     = r['กลุ่มบุคคลเข้าออก'] || r['กลุ่มบุคคล'] || '—';
     const dept    = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || r['ฝ่าย'] || '—';
     const obj     = r['วัตถุประสงค์'] || '—';
-    const inDT    = r['วันเวลาเริ่มบันทึก'] || '—';
+    const inDT    = formatDT(r['วันเวลาเริ่มบันทึก']) || '—';
     const inBy    = r['ผู้บันทึกเริ่ม'] || r['ผู้บันทึก'] || '—';
-    const outDT   = r['วันเวลาจบบันทึก'] || '—';
+    const outDT   = formatDT(r['วันเวลาจบบันทึก']) || '—';
     const outBy   = r['ผู้บันทึกจบ'] || '—';
     const ym      = r['Year-Mth'] || r['Year–Mth'] || '—';
     const isIn    = type.includes('เข้า');
@@ -530,7 +542,6 @@ function renderTable() {
       <td class="td-grp">${inBy}</td>
       <td class="td-time2">${outDT}</td>
       <td class="td-grp">${outBy}</td>
-      <td class="td-grp">${ym}</td>
     </tr>`;
   });
   document.getElementById('tbl-body').innerHTML = html;
@@ -560,7 +571,7 @@ function updateTitle() {
   const mLbl = selM.options[selM.selectedIndex]?.text || '';
   const oLbl = selO.value === 'ALL' ? 'ทุกวัตถุประสงค์' : selO.value;
   document.getElementById('tbl-title').textContent = `รายงานการเข้าออก — ${oLbl}`;
-  document.getElementById('tbl-sub').textContent = `เดือน ${mLbl} · บริษัท อีซูซุดิงสยนต์ จำกัด (สาขาสุวินทวงศ์)`;
+  document.getElementById('tbl-sub').textContent = `เดือน ${mLbl} · บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)`;
 }
 
 // ── PRINT / PDF ──
@@ -581,9 +592,9 @@ function printReport() {
     const grp    = r['กลุ่มบุคคลเข้าออก'] || r['กลุ่มบุคคล'] || '—';
     const dept   = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || r['ฝ่าย'] || '—';
     const obj    = r['วัตถุประสงค์'] || '—';
-    const inDT   = r['วันเวลาเริ่มบันทึก'] || '—';
+    const inDT   = formatDT(r['วันเวลาเริ่มบันทึก']) || '—';
     const inBy   = r['ผู้บันทึกเริ่ม'] || r['ผู้บันทึก'] || '—';
-    const outDT  = r['วันเวลาจบบันทึก'] || '—';
+    const outDT  = formatDT(r['วันเวลาจบบันทึก']) || '—';
     const outBy  = r['ผู้บันทึกจบ'] || '—';
     const ym     = r['Year-Mth'] || r['Year–Mth'] || '—';
     const bg     = i % 2 === 1 ? '#EEF4FB' : '#ffffff';
@@ -599,7 +610,6 @@ function printReport() {
       <td class="c-by">${inBy}</td>
       <td class="c-dt c-out">${outDT}</td>
       <td class="c-by">${outBy}</td>
-      <td class="c-ym">${ym}</td>
     </tr>`;
   });
 
@@ -750,7 +760,7 @@ td{border:1px solid #CFD8DC;padding:4px 4px;vertical-align:middle;}
         <th rowspan="2" style="text-align:left;min-width:60px;">วัตถุ<br>ประสงค์</th>
         <th colspan="2" class="th-in">วันเวลาเริ่มบันทึก</th>
         <th colspan="2" class="th-out">วันเวลาจบบันทึก</th>
-        <th rowspan="2">Year-<br>Month</th>
+
       </tr>
       <tr>
         <th class="th-in">วันเวลา</th>
@@ -792,6 +802,18 @@ td{border:1px solid #CFD8DC;padding:4px 4px;vertical-align:middle;}
 </div><!-- .a4-wrap -->
 
 <script>
+const TH_MONTHS_P=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function formatDT(s){
+  if(!s||s==='—') return '—';
+  const parts=String(s).split(' ');
+  const dp=parts[0].split('/');
+  if(dp.length<3) return s;
+  const d=String(parseInt(dp[0])).padStart(2,'0');
+  const m=String(parseInt(dp[1])).padStart(2,'0');
+  const y=String(parseInt(dp[2])+543).slice(-2);
+  const time=parts[1]?parts[1].substring(0,5):'';
+  return d+'-'+m+'-'+y+(time?' '+time:'');
+}
 async function exportPDF() {
   const btn = document.getElementById('btn-pdf');
   const st  = document.getElementById('pdf-status');
@@ -828,7 +850,7 @@ async function exportPDF() {
       yLeft -= H_MM;
       page++;
     }
-    const fname = 'รายงาน_${oLbl}_${selM.value}.pdf'.replace(/\//g,'-');
+    const fname = ('รายงาน_' + document.title + '.pdf').replace(/[\/\s]/g,'-');
     pdf.save(fname);
     btn.textContent = '✅ PDF สำเร็จ!';
     st.textContent = '';
@@ -861,8 +883,10 @@ function formatDateShort(s) {
   if (!s) return '—';
   const p = String(s).split(' ')[0].split('/');
   if (p.length < 3) return s;
-  const d = parseInt(p[0]), m = parseInt(p[1]), y = String(parseInt(p[2])).slice(-2);
-  return d + '/' + m + '/' + y;
+  const d = String(parseInt(p[0])).padStart(2,'0');
+  const m = String(parseInt(p[1])).padStart(2,'0');
+  const y = String(parseInt(p[2]) + 543).slice(-2);
+  return d + '-' + m + '-' + y;
 }
 
 function formatDate(s) {
@@ -877,11 +901,13 @@ function formatDate(s) {
 function formatDT(s) {
   if (!s) return '—';
   const parts = String(s).split(' ');
-  if (parts.length < 2) return formatDate(s);
   const dp = parts[0].split('/');
   if (dp.length < 3) return s;
-  const d = parseInt(dp[0]), m = parseInt(dp[1]);
-  return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')} ${parts[1].substring(0,5)}`;
+  const d = String(parseInt(dp[0])).padStart(2,'0');
+  const m = String(parseInt(dp[1])).padStart(2,'0');
+  const y = String(parseInt(dp[2]) + 543).slice(-2);
+  const time = parts[1] ? parts[1].substring(0,5) : '';
+  return `${d}-${m}-${y}${time?' '+time:''}`;
 }
 
 function copyScript() {
