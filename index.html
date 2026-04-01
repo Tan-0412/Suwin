@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานการเข้าออก — บริษัท อีซูซุดิงสยนต์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0D2137;--blue:#1565C0;--blue2:#1976D2;--accent:#FFA000;
+  --green:#2E7D32;--red:#C62828;--gray:#607D8B;
+  --bg:#F4F6F9;--white:#fff;--bd:#DDE3EA;
+  --tx:#1A2332;--mt:#546E7A;
+}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;min-height:100vh;}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 100%);
+  padding:0 24px;display:flex;align-items:center;justify-content:space-between;
+  height:64px;box-shadow:0 2px 12px rgba(0,0,0,.25);position:sticky;top:0;z-index:100;
+}
+.tb-brand{display:flex;align-items:center;gap:12px;}
+.tb-logo{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;}
+.tb-title{color:#fff;}
+.tb-title h1{font-size:16px;font-weight:700;line-height:1.2;}
+.tb-title p{font-size:11px;opacity:.7;margin-top:1px;}
+.tb-conn{display:flex;align-items:center;gap:10px;}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:#aaa;}
+.conn-dot.ok{background:#4CAF50;box-shadow:0 0 6px #4CAF50;}
+.conn-dot.err{background:#EF5350;}
+.conn-lbl{color:rgba(255,255,255,.75);font-size:11px;}
+
+/* ── CONTROL BAR ── */
+.controls{background:var(--white);border-bottom:1px solid var(--bd);padding:12px 24px;
+  display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.ctrl-grp{display:flex;flex-direction:column;gap:4px;}
+.ctrl-grp label{font-size:10px;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;}
+.ctrl-grp select,.ctrl-grp input{
+  font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--bd);
+  font-family:inherit;color:var(--tx);background:#fff;min-width:160px;
+}
+.ctrl-grp select:focus,.ctrl-grp input:focus{outline:none;border-color:var(--blue2);box-shadow:0 0 0 3px rgba(25,118,210,.12);}
+.btn{padding:7px 16px;font-size:13px;border-radius:8px;cursor:pointer;font-weight:600;
+  font-family:inherit;display:inline-flex;align-items:center;gap:6px;border:none;transition:all .15s;}
+.btn-primary{background:var(--blue2);color:#fff;}.btn-primary:hover{background:var(--blue);}
+.btn-outline{background:#fff;border:1px solid var(--bd);color:var(--tx);}.btn-outline:hover{background:var(--bg);}
+.btn-print{background:var(--navy);color:#fff;}.btn-print:hover{background:#0a1a2e;}
+.btn-lg{padding:8px 20px;font-size:14px;}
+.ctrl-right{margin-left:auto;display:flex;gap:8px;align-items:flex-end;}
+
+/* ── SETUP CARD ── */
+.setup-wrap{max-width:640px;margin:40px auto;padding:0 16px;}
+.setup-card{background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.setup-card h2{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--navy);}
+.setup-card p{font-size:13px;color:var(--mt);margin-bottom:20px;line-height:1.6;}
+.setup-row{display:flex;gap:8px;margin-bottom:12px;}
+.setup-row input{flex:1;font-size:13px;padding:9px 12px;border-radius:8px;border:1px solid var(--bd);font-family:inherit;}
+.setup-row input:focus{outline:none;border-color:var(--blue2);}
+.step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+.stepn{width:22px;height:22px;border-radius:50%;background:var(--blue2);color:#fff;font-size:11px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.stept{font-size:12.5px;line-height:1.65;color:var(--tx);}
+pre.code{background:#1a2332;color:#80CBC4;padding:12px 14px;border-radius:10px;font-size:10.5px;
+  line-height:1.7;overflow-x:auto;font-family:'Courier New',monospace;white-space:pre;margin:10px 0;}
+.setup-st{font-size:12px;margin-top:8px;min-height:18px;}
+.copy-ok{font-size:12px;color:var(--green);margin-top:4px;display:none;}
+.dvd{border:none;border-top:1px solid var(--bd);margin:18px 0;}
+
+/* ── CONTENT ── */
+.content{padding:20px 24px;}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+.stat-card{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid var(--bd);
+  box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.stat-num{font-size:28px;font-weight:700;line-height:1.1;}
+.stat-lbl{font-size:11px;color:var(--mt);font-weight:600;margin-top:2px;}
+
+/* ── TABLE ── */
+.tbl-wrap{background:#fff;border-radius:12px;border:1px solid var(--bd);overflow:hidden;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);}
+.tbl-hdr{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.tbl-hdr-title{font-size:14px;font-weight:700;color:var(--navy);}
+.tbl-hdr-sub{font-size:12px;color:var(--mt);}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead tr{background:#f0f4f8;}
+th{padding:9px 10px;text-align:center;font-weight:700;color:var(--mt);font-size:10px;
+  text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--bd);white-space:nowrap;}
+td{padding:8px 10px;text-align:center;border-bottom:1px solid #f1f5f9;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f7fafc;}
+.td-left{text-align:left!important;}
+.td-num{color:var(--mt);font-size:11px;}
+.td-plate{font-weight:700;color:var(--navy);font-size:13px;letter-spacing:.5px;}
+.td-name{font-weight:600;color:var(--tx);}
+.td-time{font-family:'Courier New',monospace;font-size:11px;color:var(--blue);}
+.td-time2{font-family:'Courier New',monospace;font-size:11px;color:var(--green);}
+.td-grp{font-size:11px;color:var(--gray);}
+.bd-in{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+  background:#E3F2FD;color:#1565C0;}
+.bd-obj{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+  background:#FFF8E1;color:#E65100;}
+/* เพิ่มสีตาม type */
+.bd-new{background:#E8F5E9;color:#1B5E20;}
+
+/* ── LOADING / EMPTY ── */
+.loader{text-align:center;padding:48px;color:var(--mt);}
+.loader-spin{display:inline-block;width:32px;height:32px;border:3px solid var(--bd);
+  border-top-color:var(--blue2);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:48px;color:var(--mt);font-size:13px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#1a2332;color:#fff;padding:10px 18px;
+  border-radius:10px;font-size:13px;z-index:999;display:none;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+
+/* ── PRINT ── */
+@media print{
+  .topbar,.controls,.setup-wrap,.toast{display:none!important;}
+  .content{padding:0;}
+  .tbl-wrap{box-shadow:none;border:none;}
+  .stat-row{display:none;}
+  body{font-size:11px;}
+  th,td{padding:5px 7px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-brand">
+    <div class="tb-logo">📋</div>
+    <div class="tb-title">
+      <h1>รายงานบันทึกการเข้าออก</h1>
+      <p>บริษัท อีซูซุดิงสยนต์ จำกัด (สาขาสุวินทวงศ์)</p>
+    </div>
+  </div>
+  <div class="tb-conn">
+    <div class="conn-dot" id="conn-dot"></div>
+    <span class="conn-lbl" id="conn-lbl">ยังไม่ได้เชื่อมต่อ</span>
+  </div>
+</div>
+
+<!-- SETUP (แสดงเมื่อยังไม่มี URL) -->
+<div id="setup-section">
+  <div class="setup-wrap">
+    <div class="setup-card">
+      <h2>⚙️ ตั้งค่าการเชื่อมต่อ Google Sheets</h2>
+      <p>ระบบดึงข้อมูลจาก Google Sheets ผ่าน Google Apps Script — ทำครั้งเดียว ใช้ได้ทุกเครื่อง</p>
+
+      <div class="step"><div class="stepn">1</div><div class="stept">เปิด Google Sheets → <strong>ส่วนขยาย (Extensions) → Apps Script</strong> → ลบโค้ดเดิมออกทั้งหมด</div></div>
+      <div class="step"><div class="stepn">2</div><div class="stept">คัดลอก Script ด้านล่าง → วางลงไปทั้งหมด → กด <strong>Ctrl+S</strong></div></div>
+      <div class="step"><div class="stepn">3</div><div class="stept"><strong>Deploy → New Deployment</strong> · Type: <strong>Web app</strong> · Execute as: <strong>Me</strong> · Who has access: <strong>Anyone</strong> → Deploy → Authorize → Allow</div></div>
+      <div class="step"><div class="stepn">4</div><div class="stept">Copy URL ที่ได้ → วางด้านล่าง → กด <strong>เชื่อมต่อ</strong></div></div>
+
+      <div class="dvd"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="font-size:13px;">📄 Apps Script (คัดลอกทั้งหมด)</strong>
+        <button class="btn btn-outline" onclick="copyScript()" style="font-size:11px;padding:4px 10px;">📋 คัดลอก</button>
+      </div>
+      <pre class="code" id="gs-code">// ═══════════════════════════════════════════════════
+//  รายงานการเข้าออก — Google Apps Script
+//  Sheet: รายงานบันทึกการเข้าออก
+// ═══════════════════════════════════════════════════
+const SHEET_NAME = 'รายงานบันทึกการเข้าออก';
+
+function doGet(e) {
+  const p = e.parameter;
+  const action = p.action || '';
+  if (action === 'ping')    return ok({ pong: true });
+  if (action === 'getData') return ok({ rows: getData(p) });
+  if (action === 'getMeta') return ok(getMeta());
+  return ok({ status: 'ready' });
+}
+
+function getData(p) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) return [];
+  const data = sh.getDataRange().getValues();
+  // หาแถว header (แถวที่มี "วันที่" เป็น cell แรกที่ไม่ว่าง)
+  let hdrRow = -1;
+  for (let i = 0; i < Math.min(10, data.length); i++) {
+    if (String(data[i][0]).includes('วันที่') || String(data[i][0]).trim() === 'วันที่') {
+      hdrRow = i; break;
+    }
+  }
+  if (hdrRow < 0) hdrRow = 2; // fallback แถวที่ 3 (index 2)
+  const hdrs = data[hdrRow].map(h => String(h).trim());
+
+  const rows = data.slice(hdrRow + 1).map(r => {
+    const o = {};
+    hdrs.forEach((h, i) => {
+      const v = r[i];
+      if (v instanceof Date) {
+        o[h] = Utilities.formatDate(v, 'Asia/Bangkok', 'dd/MM/yyyy HH:mm:ss');
+      } else {
+        o[h] = v == null ? '' : String(v).trim();
+      }
+    });
+    return o;
+  }).filter(r => r['วันที่'] && r['วันที่'] !== '');
+
+  // filter ตาม month และ objective ถ้าส่งมา
+  let filtered = rows;
+  if (p.month) {
+    filtered = filtered.filter(r => {
+      const ym = getYearMonth(r['วันที่']);
+      return ym === p.month;
+    });
+  }
+  if (p.obj && p.obj !== 'ALL') {
+    filtered = filtered.filter(r => String(r['วัตถุประสงค์']).includes(p.obj));
+  }
+
+  // เรียงตามวันเวลาเริ่มบันทึก น้อย→มาก
+  filtered.sort((a, b) => {
+    const ta = parseDateTime(a['วันเวลาเริ่มบันทึก'] || a['วันที่']);
+    const tb = parseDateTime(b['วันเวลาเริ่มบันทึก'] || b['วันที่']);
+    return ta - tb;
+  });
+
+  return filtered;
+}
+
+function getMeta() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) return { months: [], objectives: [] };
+  const data = sh.getDataRange().getValues();
+  let hdrRow = 2;
+  for (let i = 0; i < Math.min(10, data.length); i++) {
+    if (String(data[i][0]).includes('วันที่')) { hdrRow = i; break; }
+  }
+  const hdrs = data[hdrRow].map(h => String(h).trim());
+  const ymIdx = hdrs.indexOf('วันที่');
+  const objIdx = hdrs.indexOf('วัตถุประสงค์');
+
+  const months = new Set();
+  const objectives = new Set();
+  data.slice(hdrRow + 1).forEach(r => {
+    if (r[ymIdx]) {
+      const v = r[ymIdx];
+      const d = v instanceof Date ? v : new Date(String(v));
+      if (!isNaN(d)) {
+        const ym = Utilities.formatDate(d, 'Asia/Bangkok', 'yyyy-MM');
+        months.add(ym);
+      }
+    }
+    if (r[objIdx] && String(r[objIdx]).trim()) objectives.add(String(r[objIdx]).trim());
+  });
+
+  return {
+    months: [...months].sort().reverse(),
+    objectives: [...objectives].sort()
+  };
+}
+
+function getYearMonth(dateStr) {
+  if (!dateStr) return '';
+  const parts = String(dateStr).split('/');
+  if (parts.length >= 3) {
+    // dd/MM/yyyy or dd/MM/yyyy HH:mm:ss
+    const yPart = parts[2].split(' ')[0];
+    const m = parts[1].padStart(2, '0');
+    return yPart + '-' + m;
+  }
+  return '';
+}
+
+function parseDateTime(s) {
+  if (!s) return 0;
+  const parts = String(s).split(' ');
+  const dp = parts[0].split('/');
+  if (dp.length < 3) return 0;
+  const dateStr = dp[2].split(' ')[0] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
+  const timeStr = parts[1] || '00:00:00';
+  return new Date(dateStr + 'T' + timeStr).getTime();
+}
+
+function ok(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+      <div class="copy-ok" id="copy-ok">✅ คัดลอกแล้ว!</div>
+
+      <div class="dvd"></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;">🔗 URL ของ Apps Script</div>
+      <div class="setup-row">
+        <input type="text" id="gs-url" placeholder="https://script.google.com/macros/s/xxx/exec">
+        <button class="btn btn-primary" onclick="connectGS()">🔌 เชื่อมต่อ</button>
+        <button class="btn btn-outline" id="btn-test" onclick="testConn()" style="display:none;">🧪 ทดสอบ</button>
+      </div>
+      <div class="setup-st" id="setup-st"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN REPORT (ซ่อนก่อน) -->
+<div id="main-section" style="display:none;">
+  <div class="controls">
+    <div class="ctrl-grp">
+      <label>เดือน</label>
+      <select id="sel-month" onchange="loadReport()"></select>
+    </div>
+    <div class="ctrl-grp">
+      <label>วัตถุประสงค์</label>
+      <select id="sel-obj" onchange="loadReport()"></select>
+    </div>
+    <div class="ctrl-grp">
+      <label>ค้นหา</label>
+      <input type="text" id="inp-search" placeholder="ทะเบียน / ชื่อ / ฝ่าย..." oninput="filterTable()">
+    </div>
+    <div class="ctrl-right">
+      <button class="btn btn-outline" onclick="loadReport()">🔄 รีเฟรช</button>
+      <button class="btn btn-print btn-lg" onclick="printReport()">🖨 พิมพ์รายงาน</button>
+      <button class="btn btn-outline" onclick="showSetup()">⚙️ ตั้งค่า</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stat-row" id="stat-row"></div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-hdr">
+        <div>
+          <div class="tbl-hdr-title" id="tbl-title">รายงานบันทึกการเข้าออก</div>
+          <div class="tbl-hdr-sub" id="tbl-sub">—</div>
+        </div>
+        <div id="rec-count" style="font-size:12px;color:var(--mt);"></div>
+      </div>
+      <div class="tw">
+        <table id="main-table">
+          <thead>
+            <tr>
+              <th>ลำดับที่</th>
+              <th>วันที่บันทึก</th>
+              <th class="td-left">ทะเบียนรถ</th>
+              <th>ประเภทเข้าออก</th>
+              <th class="td-left">กลุ่มบุคคลเข้าออก</th>
+              <th class="td-left">ฝ่าย/ฝ่ายที่ต้องการติดต่อ</th>
+              <th class="td-left">วัตถุประสงค์</th>
+              <th>วันเวลาเริ่มบันทึก</th>
+              <th>ผู้บันทึกเริ่ม</th>
+              <th>วันเวลาจบบันทึก</th>
+              <th>ผู้บันทึกจบ</th>
+              <th>Year-Month</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body">
+            <tr><td colspan="12"><div class="loader"><div class="loader-spin"></div><br>กำลังโหลด...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const HARDCODED_URL = ''; // วาง URL ที่นี่ถ้าต้องการฝังไว้
+let gsUrl = localStorage.getItem('rpt_url') || HARDCODED_URL;
+let allRows = []; // ข้อมูลทั้งหมดที่ดึงมา
+let filteredRows = []; // หลัง filter
+
+// ── INIT ──
+window.onload = function() {
+  if (gsUrl) {
+    showMain();
+    loadMeta().then(() => loadReport());
+  }
+};
+
+function showMain() {
+  document.getElementById('setup-section').style.display = 'none';
+  document.getElementById('main-section').style.display = '';
+}
+function showSetup() {
+  document.getElementById('setup-section').style.display = '';
+  document.getElementById('main-section').style.display = 'none';
+  if (gsUrl) document.getElementById('gs-url').value = gsUrl;
+}
+
+// ── CONNECT ──
+function connectGS() {
+  const url = document.getElementById('gs-url').value.trim();
+  if (!url.includes('script.google.com')) {
+    document.getElementById('setup-st').innerHTML = '<span style="color:var(--red);">❌ URL ไม่ถูกต้อง</span>';
+    return;
+  }
+  gsUrl = url;
+  localStorage.setItem('rpt_url', url);
+  document.getElementById('btn-test').style.display = '';
+  document.getElementById('setup-st').innerHTML = '<span style="color:var(--green);">✅ บันทึก URL แล้ว — กด 🧪 ทดสอบ</span>';
+}
+
+async function testConn() {
+  const st = document.getElementById('setup-st');
+  st.textContent = '⏳ กำลังทดสอบ...';
+  try {
+    const d = await callGS({ action: 'ping' });
+    if (!d.pong) { st.innerHTML = '<span style="color:var(--red);">❌ ตอบผิดปกติ — Deploy ใหม่อีกครั้ง</span>'; return; }
+    st.textContent = '✅ เชื่อมต่อได้ กำลังโหลดข้อมูล...';
+    await loadMeta();
+    await loadReport();
+    showMain();
+    st.innerHTML = '<span style="color:var(--green);">✅ พร้อมใช้งาน!</span>';
+  } catch(e) {
+    st.innerHTML = '<span style="color:var(--red);">❌ ' + e.message + '</span>';
+  }
+}
+
+// ── API ──
+function callGS(params) {
+  const qs = Object.entries(params).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v ?? '')).join('&');
+  return fetch(gsUrl + '?' + qs, { redirect: 'follow' })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .catch(err => { console.warn('GS:', err); return {}; });
+}
+
+// ── META (months, objectives) ──
+async function loadMeta() {
+  try {
+    const d = await callGS({ action: 'getMeta' });
+    setConn(true);
+    // เดือน
+    const selM = document.getElementById('sel-month');
+    const curM = selM.value;
+    selM.innerHTML = '';
+    (d.months || []).forEach(m => {
+      const [y, mo] = m.split('-');
+      const label = thMonth(parseInt(mo)) + ' ' + (parseInt(y) + 543);
+      selM.innerHTML += `<option value="${m}">${label}</option>`;
+    });
+    if (curM && [...selM.options].find(o => o.value === curM)) selM.value = curM;
+
+    // วัตถุประสงค์
+    const selO = document.getElementById('sel-obj');
+    const curO = selO.value || 'ดูรถใหม่';
+    selO.innerHTML = '<option value="ALL">— ทั้งหมด —</option>';
+    (d.objectives || []).forEach(obj => {
+      selO.innerHTML += `<option value="${obj}">${obj}</option>`;
+    });
+    // ตั้งค่า default = ดูรถใหม่
+    const match = [...selO.options].find(o => o.value === curO);
+    if (match) selO.value = curO;
+
+  } catch(e) { setConn(false); }
+}
+
+// ── LOAD REPORT ──
+async function loadReport() {
+  const month = document.getElementById('sel-month').value;
+  const obj   = document.getElementById('sel-obj').value;
+  if (!month) return;
+
+  document.getElementById('tbl-body').innerHTML =
+    '<tr><td colspan="12"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
+
+  try {
+    const params = { action: 'getData', month };
+    if (obj && obj !== 'ALL') params.obj = obj;
+    const d = await callGS(params);
+    allRows = d.rows || [];
+    setConn(true);
+    renderTable();
+    updateStats();
+    updateTitle();
+  } catch(e) {
+    setConn(false);
+    document.getElementById('tbl-body').innerHTML =
+      '<tr><td colspan="12"><div class="empty">❌ ดึงข้อมูลไม่ได้ — ' + e.message + '</div></td></tr>';
+  }
+}
+
+// ── FILTER (client-side search) ──
+function filterTable() {
+  renderTable();
+}
+
+// ── RENDER ──
+function renderTable() {
+  const q = document.getElementById('inp-search').value.trim().toLowerCase();
+  filteredRows = q
+    ? allRows.filter(r =>
+        Object.values(r).some(v => String(v).toLowerCase().includes(q))
+      )
+    : allRows;
+
+  document.getElementById('rec-count').textContent = filteredRows.length + ' รายการ';
+
+  if (filteredRows.length === 0) {
+    document.getElementById('tbl-body').innerHTML =
+      '<tr><td colspan="12"><div class="empty">📭 ไม่พบข้อมูลที่ตรงกับเงื่อนไข</div></td></tr>';
+    return;
+  }
+
+  let html = '';
+  filteredRows.forEach((r, i) => {
+    const dayStr  = formatDateShort(r['วันที่']);
+    const plate   = r['ทะเบียนรถ'] || '—';
+    const type    = r['ประเภทเข้าออก'] || r['ประเภท'] || '—';
+    const grp     = r['กลุ่มบุคคลเข้าออก'] || r['กลุ่มบุคคล'] || '—';
+    const dept    = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || r['ฝ่าย'] || '—';
+    const obj     = r['วัตถุประสงค์'] || '—';
+    const inDT    = r['วันเวลาเริ่มบันทึก'] || '—';
+    const inBy    = r['ผู้บันทึกเริ่ม'] || r['ผู้บันทึก'] || '—';
+    const outDT   = r['วันเวลาจบบันทึก'] || '—';
+    const outBy   = r['ผู้บันทึกจบ'] || '—';
+    const ym      = r['Year-Mth'] || r['Year–Mth'] || '—';
+    const isIn    = type.includes('เข้า');
+    html += `<tr>
+      <td class="td-num">${i + 1}</td>
+      <td style="font-size:11px;">${dayStr}</td>
+      <td class="td-left td-plate">${plate}</td>
+      <td><span class="bd-in" style="${isIn?'':'background:#FFF3E0;color:#E65100;'}">${type}</span></td>
+      <td class="td-left td-grp">${grp}</td>
+      <td class="td-left td-grp">${dept}</td>
+      <td class="td-left"><span class="bd-obj" style="color:#c0392b;">${obj}</span></td>
+      <td class="td-time">${inDT}</td>
+      <td class="td-grp">${inBy}</td>
+      <td class="td-time2">${outDT}</td>
+      <td class="td-grp">${outBy}</td>
+      <td class="td-grp">${ym}</td>
+    </tr>`;
+  });
+  document.getElementById('tbl-body').innerHTML = html;
+}
+
+// ── STATS ──
+function updateStats() {
+  const total  = allRows.length;
+  const inCnt  = allRows.filter(r => (r['ประเภทเข้าออก']||r['ประเภท']||'').includes('เข้า')).length;
+  const outCnt = allRows.filter(r => (r['ประเภทเข้าออก']||r['ประเภท']||'').includes('ออก')).length;
+  const plates = new Set(allRows.map(r => r['ทะเบียนรถ']).filter(Boolean)).size;
+  const days   = new Set(allRows.map(r => (r['วันที่']||'').split(' ')[0]).filter(Boolean)).size;
+
+  document.getElementById('stat-row').innerHTML = `
+    <div class="stat-card"><div class="stat-num" style="color:var(--blue);">${total}</div><div class="stat-lbl">📋 รายการทั้งหมด</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green);">${inCnt}</div><div class="stat-lbl">🚗 เข้า</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red);">${outCnt}</div><div class="stat-lbl">🚗 ออก</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--navy);">${plates}</div><div class="stat-lbl">🔢 ทะเบียนไม่ซ้ำ</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--gray);">${days}</div><div class="stat-lbl">📅 วันที่มีรายการ</div></div>
+  `;
+}
+
+// ── TITLE ──
+function updateTitle() {
+  const selM = document.getElementById('sel-month');
+  const selO = document.getElementById('sel-obj');
+  const mLbl = selM.options[selM.selectedIndex]?.text || '';
+  const oLbl = selO.value === 'ALL' ? 'ทุกวัตถุประสงค์' : selO.value;
+  document.getElementById('tbl-title').textContent = `รายงานการเข้าออก — ${oLbl}`;
+  document.getElementById('tbl-sub').textContent = `เดือน ${mLbl} · บริษัท อีซูซุดิงสยนต์ จำกัด (สาขาสุวินทวงศ์)`;
+}
+
+// ── PRINT / PDF ──
+function printReport() {
+  const selM = document.getElementById('sel-month');
+  const selO = document.getElementById('sel-obj');
+  const mLbl = selM.options[selM.selectedIndex]?.text || '';
+  const oLbl = selO.value === 'ALL' ? 'ทุกวัตถุประสงค์' : selO.value;
+  const total = filteredRows.length;
+  const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+
+  // Build rows HTML
+  let rows = '';
+  filteredRows.forEach((r, i) => {
+    const dayStr = formatDateShort(r['วันที่']);
+    const plate  = r['ทะเบียนรถ'] || '—';
+    const type   = r['ประเภทเข้าออก'] || r['ประเภท'] || '—';
+    const grp    = r['กลุ่มบุคคลเข้าออก'] || r['กลุ่มบุคคล'] || '—';
+    const dept   = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || r['ฝ่าย'] || '—';
+    const obj    = r['วัตถุประสงค์'] || '—';
+    const inDT   = r['วันเวลาเริ่มบันทึก'] || '—';
+    const inBy   = r['ผู้บันทึกเริ่ม'] || r['ผู้บันทึก'] || '—';
+    const outDT  = r['วันเวลาจบบันทึก'] || '—';
+    const outBy  = r['ผู้บันทึกจบ'] || '—';
+    const ym     = r['Year-Mth'] || r['Year–Mth'] || '—';
+    const bg     = i % 2 === 1 ? '#EEF4FB' : '#ffffff';
+    rows += `<tr style="background:${bg};">
+      <td class="c-num">${i+1}</td>
+      <td class="c-date">${dayStr}</td>
+      <td class="c-left c-plate">${plate}</td>
+      <td class="c-type">${type}</td>
+      <td class="c-left">${grp}</td>
+      <td class="c-left">${dept}</td>
+      <td class="c-left c-obj">${obj}</td>
+      <td class="c-dt c-in">${inDT}</td>
+      <td class="c-by">${inBy}</td>
+      <td class="c-dt c-out">${outDT}</td>
+      <td class="c-by">${outBy}</td>
+      <td class="c-ym">${ym}</td>
+    </tr>`;
+  });
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>รายงาน_${oLbl}_${selM.value}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:#e8ecf0;color:#111;font-size:11px;}
+
+/* ── control bar (hidden on print) ── */
+.ctrl-bar{
+  background:#1a2332;padding:10px 20px;display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:50;
+}
+.ctrl-bar span{color:rgba(255,255,255,.6);font-size:11px;margin-left:4px;}
+.pbtn{
+  padding:7px 20px;font-size:12px;font-family:'Sarabun',sans-serif;border:none;
+  border-radius:6px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;
+}
+.pbtn-red{background:#c62828;color:#fff;}.pbtn-red:hover{background:#b71c1c;}
+.pbtn-gray{background:#546e7a;color:#fff;}.pbtn-gray:hover{background:#37474f;}
+#pdf-status{color:#ffd600;font-size:12px;font-weight:600;margin-left:8px;}
+
+/* ── A4 page simulation ── */
+.a4-wrap{
+  width:210mm;min-height:297mm;margin:20px auto;background:#fff;
+  box-shadow:0 4px 32px rgba(0,0,0,.18);
+  padding:12mm 10mm 14mm 10mm;
+}
+.a4-content{width:100%;}
+
+/* ── report header ── */
+.rh-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1mm;}
+.rh-main-title{font-size:14pt;font-weight:700;color:#0D2137;border-bottom:2.5px solid #1565C0;padding-bottom:1mm;}
+.rh-ym-badge{
+  background:#FFD600;color:#000;font-size:11pt;font-weight:700;
+  padding:2px 10px;border-radius:4px;letter-spacing:.5px;white-space:nowrap;
+}
+.rh-company{font-size:11pt;font-weight:600;color:#1565C0;margin-bottom:2mm;}
+.rh-row3{
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid #CFD8DC;border-bottom:1px solid #CFD8DC;
+  padding:2mm 0;margin-bottom:3mm;
+}
+.rh-obj{font-size:10pt;}
+.rh-obj strong{color:#c0392b;}
+.rh-mon{font-size:10pt;}
+.rh-mon strong{color:#1565C0;}
+
+/* ── table ── */
+.tbl-wrap{width:100%;overflow:hidden;border-radius:4px;border:1px solid #B0BEC5;}
+table{width:100%;border-collapse:collapse;font-size:7.5pt;}
+thead tr:first-child th{
+  background:#0D2137;color:#fff;padding:5px 4px;
+  text-align:center;font-weight:700;font-size:7pt;
+  border:1px solid #1565C0;white-space:nowrap;
+}
+thead tr:nth-child(2) th{
+  padding:3px 4px;text-align:center;font-size:6.5pt;font-weight:700;
+  border:1px solid rgba(255,255,255,.3);
+}
+thead .th-in{background:#00838F;}
+thead .th-out{background:#2E7D32;}
+td{border:1px solid #CFD8DC;padding:4px 4px;vertical-align:middle;}
+.c-num{text-align:center;color:#666;width:24px;}
+.c-date{text-align:center;width:44px;white-space:nowrap;}
+.c-left{text-align:left;}
+.c-plate{font-weight:700;color:#0D2137;width:110px;}
+.c-type{text-align:center;width:40px;}
+.c-obj{color:#c0392b;font-weight:600;}
+.c-dt{text-align:center;font-size:6.5pt;width:80px;white-space:nowrap;}
+.c-in{background:#E0F7FA !important;color:#006064;font-weight:600;}
+.c-out{background:#E8F5E9 !important;color:#1B5E20;font-weight:600;}
+.c-by{text-align:center;width:36px;font-size:6.5pt;}
+.c-ym{text-align:center;width:38px;font-size:6pt;color:#888;}
+
+/* ── summary + signatures ── */
+.summary-row{
+  display:flex;justify-content:flex-end;margin-top:3mm;
+}
+.summary-box{
+  background:#0D2137;color:#fff;border-radius:5px;
+  padding:5px 16px;font-size:10pt;font-weight:700;
+}
+.sig-section{
+  display:flex;justify-content:space-between;
+  margin-top:12mm;padding:0 8mm;
+}
+.sig-block{width:240px;}
+.sig-spacer{height:10mm;}
+.sig-line{
+  border-bottom:1.5px dotted #555;margin-bottom:3mm;
+}
+.sig-label{font-size:9.5pt;font-weight:700;color:#0D2137;text-align:center;}
+
+.print-date{text-align:center;font-size:7pt;color:#aaa;margin-top:4mm;}
+
+/* ── print media: hide controls, no shadow ── */
+@media print{
+  body{background:#fff;}
+  .ctrl-bar{display:none !important;}
+  .a4-wrap{
+    width:100%;min-height:auto;margin:0;padding:8mm 8mm 10mm 8mm;
+    box-shadow:none;
+  }
+  @page{size:A4 portrait;margin:0;}
+}
+</style></head><body>
+
+<div class="ctrl-bar">
+  <button class="pbtn pbtn-red" id="btn-pdf" onclick="exportPDF()">
+    ⬇ บันทึก PDF
+  </button>
+  <button class="pbtn pbtn-gray" onclick="window.print()">🖨 พิมพ์โดยตรง</button>
+  <button class="pbtn pbtn-gray" onclick="window.close()">✕ ปิด</button>
+  <span id="pdf-status"></span>
+  <span style="margin-left:auto;">รายงาน ${oLbl} · ${mLbl} · ${total} ราย</span>
+</div>
+
+<div class="a4-wrap" id="a4-page">
+<div class="a4-content">
+
+  <!-- header -->
+  <div class="rh-row1">
+    <div class="rh-main-title">รายงานการบันทึกเข้าออก</div>
+    <div class="rh-ym-badge">${selM.value}</div>
+  </div>
+  <div class="rh-company">บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</div>
+  <div class="rh-row3">
+    <div class="rh-obj">วัตถุประสงค์เข้าออก : <strong>${oLbl}</strong></div>
+    <div class="rh-mon">เดือน : <strong>${mLbl}</strong></div>
+  </div>
+
+  <!-- table -->
+  <div class="tbl-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="2">ลำดับ<br>ที่</th>
+        <th rowspan="2">วันที่<br>บันทึก</th>
+        <th rowspan="2" style="text-align:left;min-width:100px;">ทะเบียนรถ</th>
+        <th rowspan="2">ประเภท<br>เข้าออก</th>
+        <th rowspan="2" style="text-align:left;min-width:80px;">กลุ่มบุคคล<br>เข้าออก</th>
+        <th rowspan="2" style="text-align:left;min-width:90px;">ฝ่าย/ฝ่ายที่<br>ต้องการติดต่อ</th>
+        <th rowspan="2" style="text-align:left;min-width:60px;">วัตถุ<br>ประสงค์</th>
+        <th colspan="2" class="th-in">วันเวลาเริ่มบันทึก</th>
+        <th colspan="2" class="th-out">วันเวลาจบบันทึก</th>
+        <th rowspan="2">Year-<br>Month</th>
+      </tr>
+      <tr>
+        <th class="th-in">วันเวลา</th>
+        <th class="th-in">ผู้บันทึก</th>
+        <th class="th-out">วันเวลา</th>
+        <th class="th-out">ผู้บันทึก</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+  </div>
+
+  <!-- summary -->
+  <div class="summary-row">
+    <div class="summary-box">จำนวนทั้งสิ้น &nbsp;${total}&nbsp; ราย</div>
+  </div>
+
+  <!-- signatures -->
+  <div class="sig-section">
+    <div class="sig-block">
+      <div class="sig-spacer"></div>
+      <div class="sig-line"></div>
+      <div class="sig-label">ลงชื่อ .....................................................</div>
+      <div class="sig-label" style="font-size:8.5pt;color:#555;margin-top:1mm;">( ผู้รายงาน )</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-spacer"></div>
+      <div class="sig-line"></div>
+      <div class="sig-label">ลงชื่อ .....................................................</div>
+      <div class="sig-label" style="font-size:8.5pt;color:#555;margin-top:1mm;">( ผู้ตรวจรายงาน )</div>
+    </div>
+  </div>
+
+  <div class="print-date">พิมพ์วันที่ ${today}</div>
+
+</div>
+</div><!-- .a4-wrap -->
+
+<script>
+async function exportPDF() {
+  const btn = document.getElementById('btn-pdf');
+  const st  = document.getElementById('pdf-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังสร้าง PDF...';
+  st.textContent = 'กรุณารอสักครู่...';
+  try {
+    const { jsPDF } = window.jspdf;
+    const el = document.getElementById('a4-page');
+    // A4: 210 x 297 mm
+    const W_MM = 210, H_MM = 297;
+    const scale = 3; // high res
+    const canvas = await html2canvas(el, {
+      scale,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight,
+    });
+    const imgData = canvas.toDataURL('image/png');
+    const cW = canvas.width, cH = canvas.height;
+    // Scale image to fit A4 width, multi-page if tall
+    const ratio  = W_MM / (cW / scale * 3.7795); // px -> mm at 96dpi
+    const imgW   = W_MM;
+    const imgH   = (cH / scale) * (W_MM / (cW / scale));
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    let yLeft = imgH;
+    let yPos  = 0;
+    let page  = 0;
+    while (yLeft > 0) {
+      if (page > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, -yPos, imgW, imgH);
+      yPos  += H_MM;
+      yLeft -= H_MM;
+      page++;
+    }
+    const fname = 'รายงาน_${oLbl}_${selM.value}.pdf'.replace(/\//g,'-');
+    pdf.save(fname);
+    btn.textContent = '✅ PDF สำเร็จ!';
+    st.textContent = '';
+    setTimeout(()=>{ btn.textContent='⬇ บันทึก PDF'; btn.disabled=false; }, 3000);
+  } catch(e) {
+    btn.textContent = '❌ เกิดข้อผิดพลาด';
+    st.textContent = e.message;
+    btn.disabled = false;
+  }
+}
+<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ── HELPERS ──
+function setConn(ok) {
+  document.getElementById('conn-dot').className = 'conn-dot ' + (ok ? 'ok' : 'err');
+  document.getElementById('conn-lbl').textContent = ok ? 'เชื่อมต่อแล้ว' : 'เชื่อมต่อไม่ได้';
+}
+
+const TH_MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+function thMonth(m) { return TH_MONTHS_FULL[m] || ''; }
+
+function formatDateShort(s) {
+  if (!s) return '—';
+  const p = String(s).split(' ')[0].split('/');
+  if (p.length < 3) return s;
+  const d = parseInt(p[0]), m = parseInt(p[1]), y = String(parseInt(p[2])).slice(-2);
+  return d + '/' + m + '/' + y;
+}
+
+function formatDate(s) {
+  if (!s) return '—';
+  // dd/MM/yyyy or dd/MM/yyyy HH:mm:ss
+  const p = String(s).split(' ')[0].split('/');
+  if (p.length < 3) return s;
+  const d = parseInt(p[0]), m = parseInt(p[1]), y = parseInt(p[2]);
+  return `${d} ${TH_MONTHS[m]} ${y + 543}`;
+}
+
+function formatDT(s) {
+  if (!s) return '—';
+  const parts = String(s).split(' ');
+  if (parts.length < 2) return formatDate(s);
+  const dp = parts[0].split('/');
+  if (dp.length < 3) return s;
+  const d = parseInt(dp[0]), m = parseInt(dp[1]);
+  return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')} ${parts[1].substring(0,5)}`;
+}
+
+function copyScript() {
+  navigator.clipboard.writeText(document.getElementById('gs-code').textContent).then(() => {
+    const el = document.getElementById('copy-ok');
+    el.style.display = '';
+    setTimeout(() => el.style.display = 'none', 2500);
+  });
+}
+
+function toast(msg, col) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = col === 'r' ? '#c62828' : '#1a2332';
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 2500);
+}
+</script>
+</body>
+</html>
