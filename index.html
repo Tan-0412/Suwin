@@ -925,7 +925,7 @@ function makeYearMonth(dateStr) {
   const y = parseInt(p[2]);
   const m = parseInt(p[1]);
   if (isNaN(y) || isNaN(m)) return '—';
-  return y + '-' + m;
+  return y + '-' + String(m).padStart(2, '0');
 }
 
 function formatDateShort(s) {
