@@ -202,20 +202,22 @@ function getData(p) {
   }
   const hdrs = data[hdrRow].map(h => String(h).trim());
 
-  // หา index ของคอลัมน์หลักที่ต้องการส่งกลับ (ลด payload)
-  const keyCols = ['วันที่','ทะเบียนรถ','ประเภทเข้าออก','ประเภท',
-    'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล','ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย',
-    'วัตถุประสงค์','วัตถุ','วันเวลาเริ่มบันทึก','ผู้บันทึกเริ่ม','ผู้บันทึก',
-    'วันเวลาจบบันทึก','ผู้บันทึกจบ'];
-  const keyIdx = hdrs.map((h,i) => keyCols.some(k => h.includes(k.slice(0,4))) ? i : -1)
-                     .filter(i => i >= 0);
-
   const rows = data.slice(hdrRow + 1).map(r => {
     const o = {};
     hdrs.forEach((h, i) => {
+      if (!h) return; // ข้าม header ว่าง
       const v = r[i];
       if (v instanceof Date) {
-        o[h] = Utilities.formatDate(v, 'Asia/Bangkok', 'dd/MM/yyyy HH:mm:ss');
+        // ตรวจว่าเป็น time-only (base date 1899-12-30) หรือ datetime จริง
+        const epoch = v.getTime();
+        const base1899 = new Date('1899-12-30T00:00:00Z').getTime();
+        const diffDays = (epoch - base1899) / 86400000;
+        if (diffDays < 1) {
+          // time-only serial
+          o[h] = Utilities.formatDate(v, 'Asia/Bangkok', 'HH:mm:ss');
+        } else {
+          o[h] = Utilities.formatDate(v, 'Asia/Bangkok', 'dd/MM/yyyy HH:mm:ss');
+        }
       } else {
         o[h] = v == null ? '' : String(v).trim();
       }
@@ -541,15 +543,15 @@ function renderTable() {
   filteredRows.forEach((r, i) => {
     const dayStr  = formatDateShort(r['วันที่']);
     const plate   = r['ทะเบียนรถ'] || '—';
-    const type    = r['ประเภทเข้าออก'] || r['ประเภท'] || '—';
-    const grp     = r['กลุ่มบุคคลเข้าออก'] || r['กลุ่มบุคคล'] || '—';
-    const dept    = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || r['ฝ่าย'] || '—';
-    const obj     = r['วัตถุประสงค์'] || '—';
-    const inDT    = formatDT(r['วันเวลาเริ่มบันทึก']) || '—';
-    const inBy    = r['ผู้บันทึกเริ่ม'] || r['ผู้บันทึก'] || '—';
-    const outDT   = formatDT(r['วันเวลาจบบันทึก']) || '—';
-    const outBy   = r['ผู้บันทึกจบ'] || '—';
-    const ym      = r['Year-Mth'] || r['Year–Mth'] || '—';
+    const type    = findCol(r,'ประเภทเข้าออก','ประเภท เข้าออก','ประเภท') || '—';
+    const grp     = findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล') || '—';
+    const dept    = findCol(r,'ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย') || '—';
+    const obj     = findCol(r,'วัตถุประสงค์','วัตถุ') || '—';
+    const inDT    = formatDT(findCol(r,'วันเวลาเริ่มบันทึก','เริ่มบันทึก')) || '—';
+    const inBy    = findCol(r,'ผู้บันทึกเริ่ม','ผู้บันทึก') || '—';
+    const outDT   = formatDT(findCol(r,'วันเวลาจบบันทึก','จบบันทึก')) || '—';
+    const outBy   = findCol(r,'ผู้บันทึกจบ') || '—';
+    const ym      = makeYearMonth(r['วันที่']); // สร้างใหม่จาก วันที่ แทนการพึ่ง Sheet
     const isIn    = type.includes('เข้า');
     html += `<tr>
       <td class="td-num">${i + 1}</td>
@@ -609,15 +611,15 @@ function printReport() {
   filteredRows.forEach((r, i) => {
     const dayStr = formatDateShort(r['วันที่']);
     const plate  = r['ทะเบียนรถ'] || '—';
-    const type   = r['ประเภทเข้าออก'] || r['ประเภท'] || '—';
-    const grp    = r['กลุ่มบุคคลเข้าออก'] || r['กลุ่มบุคคล'] || '—';
-    const dept   = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || r['ฝ่าย'] || '—';
-    const obj    = r['วัตถุประสงค์'] || '—';
-    const inDT   = formatDT(r['วันเวลาเริ่มบันทึก']) || '—';
-    const inBy   = r['ผู้บันทึกเริ่ม'] || r['ผู้บันทึก'] || '—';
-    const outDT  = formatDT(r['วันเวลาจบบันทึก']) || '—';
-    const outBy  = r['ผู้บันทึกจบ'] || '—';
-    const ym     = r['Year-Mth'] || r['Year–Mth'] || '—';
+    const type   = findCol(r,'ประเภทเข้าออก','ประเภท เข้าออก','ประเภท') || '—';
+    const grp    = findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล') || '—';
+    const dept   = findCol(r,'ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย') || '—';
+    const obj    = findCol(r,'วัตถุประสงค์','วัตถุ') || '—';
+    const inDT   = formatDT(findCol(r,'วันเวลาเริ่มบันทึก','เริ่มบันทึก')) || '—';
+    const inBy   = findCol(r,'ผู้บันทึกเริ่ม','ผู้บันทึก') || '—';
+    const outDT  = formatDT(findCol(r,'วันเวลาจบบันทึก','จบบันทึก')) || '—';
+    const outBy  = findCol(r,'ผู้บันทึกจบ') || '—';
+    const ym     = makeYearMonth(r['วันที่']);
     const bg     = i % 2 === 1 ? '#EEF4FB' : '#ffffff';
     rows += `<tr style="background:${bg};">
       <td class="c-num">${i+1}</td>
@@ -759,7 +761,6 @@ td{border:1px solid #CFD8DC;padding:4px 4px;vertical-align:middle;}
   <!-- header -->
   <div class="rh-row1">
     <div class="rh-main-title">รายงานการบันทึกเข้าออก</div>
-    <div class="rh-ym-badge">${selM.value}</div>
   </div>
   <div class="rh-company">บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</div>
   <div class="rh-row3">
@@ -899,6 +900,33 @@ function setConn(ok) {
 const TH_MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const TH_MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 function thMonth(m) { return TH_MONTHS_FULL[m] || ''; }
+
+// ── ค้นหาค่าจาก row โดย partial-match ชื่อคอลัมน์ (tolerant) ──
+function findCol(row, ...keys) {
+  for (const key of keys) {
+    // ตรงเป๊ะก่อน
+    if (key in row && row[key] !== '' && row[key] !== null) return row[key];
+    // partial match — หาคีย์ที่มีทุก substring ของ key ใน row
+    const kLower = key.toLowerCase().replace(/\s/g,'');
+    const found = Object.keys(row).find(k => {
+      const rk = k.toLowerCase().replace(/\s/g,'');
+      return rk === kLower || rk.includes(kLower) || kLower.includes(rk);
+    });
+    if (found && row[found] !== '') return row[found];
+  }
+  return '';
+}
+
+// ── สร้าง Year-Month จาก วันที่ (dd/MM/yyyy ...) → "yyyy-M" เช่น "2026-3" ──
+function makeYearMonth(dateStr) {
+  if (!dateStr) return '—';
+  const p = String(dateStr).split('/');
+  if (p.length < 3) return '—';
+  const y = parseInt(p[2]);
+  const m = parseInt(p[1]);
+  if (isNaN(y) || isNaN(m)) return '—';
+  return y + '-' + m;
+}
 
 function formatDateShort(s) {
   if (!s) return '—';
