@@ -202,6 +202,14 @@ function getData(p) {
   }
   const hdrs = data[hdrRow].map(h => String(h).trim());
 
+  // หา index ของคอลัมน์หลักที่ต้องการส่งกลับ (ลด payload)
+  const keyCols = ['วันที่','ทะเบียนรถ','ประเภทเข้าออก','ประเภท',
+    'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล','ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย',
+    'วัตถุประสงค์','วัตถุ','วันเวลาเริ่มบันทึก','ผู้บันทึกเริ่ม','ผู้บันทึก',
+    'วันเวลาจบบันทึก','ผู้บันทึกจบ'];
+  const keyIdx = hdrs.map((h,i) => keyCols.some(k => h.includes(k.slice(0,4))) ? i : -1)
+                     .filter(i => i >= 0);
+
   const rows = data.slice(hdrRow + 1).map(r => {
     const o = {};
     hdrs.forEach((h, i) => {
@@ -238,7 +246,9 @@ function getData(p) {
     return ta - tb;
   });
 
-  return filtered;
+  // limit จำนวน rows ที่ส่งกลับ (ป้องกัน payload ใหญ่เกิน)
+  const limit = parseInt(p.limit) || 500;
+  return filtered.slice(0, limit);
 }
 
 function getMeta() {
@@ -259,11 +269,19 @@ function getMeta() {
   data.slice(hdrRow + 1).forEach(r => {
     if (r[ymIdx]) {
       const v = r[ymIdx];
-      const d = v instanceof Date ? v : new Date(String(v));
-      if (!isNaN(d)) {
-        const ym = Utilities.formatDate(d, 'Asia/Bangkok', 'yyyy-MM');
-        months.add(ym);
+      let ym = '';
+      if (v instanceof Date) {
+        ym = Utilities.formatDate(v, 'Asia/Bangkok', 'yyyy-MM');
+      } else {
+        // parse dd/MM/yyyy manually
+        const s = String(v).trim();
+        const parts = s.split('/');
+        if (parts.length >= 3) {
+          const dd = parts[0], mm = parts[1].padStart(2,'0'), yyyy = parts[2].split(' ')[0];
+          ym = yyyy + '-' + mm;
+        }
       }
+      if (ym) months.add(ym);
     }
     if (r[objIdx] && String(r[objIdx]).trim()) objectives.add(String(r[objIdx]).trim());
   });
@@ -276,9 +294,12 @@ function getMeta() {
 
 function getYearMonth(dateStr) {
   if (!dateStr) return '';
+  if (dateStr instanceof Date) {
+    return Utilities.formatDate(dateStr, 'Asia/Bangkok', 'yyyy-MM');
+  }
   const parts = String(dateStr).split('/');
   if (parts.length >= 3) {
-    // dd/MM/yyyy or dd/MM/yyyy HH:mm:ss
+    // dd/MM/yyyy — parts[0]=dd, parts[1]=MM, parts[2]=yyyy
     const yPart = parts[2].split(' ')[0];
     const m = parts[1].padStart(2, '0');
     return yPart + '-' + m;
