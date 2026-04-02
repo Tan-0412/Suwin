@@ -44,6 +44,26 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--tx);font-
   font-family:inherit;color:var(--tx);background:#fff;min-width:160px;
 }
 .ctrl-grp select:focus,.ctrl-grp input:focus{outline:none;border-color:var(--blue2);box-shadow:0 0 0 3px rgba(25,118,210,.12);}
+/* multi-select dropdown */
+.ms-wrap{position:relative;min-width:160px;}
+.ms-btn{font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--bd);
+  font-family:inherit;color:var(--tx);background:#fff;width:100%;text-align:left;
+  cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.ms-btn:hover{border-color:var(--blue2);}
+.ms-btn .ms-arrow{font-size:10px;color:var(--mt);}
+.ms-btn.active{border-color:var(--blue2);box-shadow:0 0 0 3px rgba(25,118,210,.12);}
+.ms-btn .ms-tag{background:var(--blue2);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700;}
+.ms-panel{position:absolute;top:calc(100% + 4px);left:0;min-width:220px;background:#fff;
+  border:1px solid var(--bd);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);
+  z-index:200;display:none;padding:6px 0;max-height:280px;overflow-y:auto;}
+.ms-panel.open{display:block;}
+.ms-search{padding:6px 10px;}
+.ms-search input{width:100%;font-size:12px;padding:5px 8px;border-radius:6px;
+  border:1px solid var(--bd);font-family:inherit;}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:13px;}
+.ms-item:hover{background:var(--bg);}
+.ms-item input[type=checkbox]{accent-color:var(--blue2);width:14px;height:14px;cursor:pointer;}
+.ms-select-all{border-bottom:1px solid var(--bd);font-weight:700;color:var(--blue2);}
 .btn{padding:7px 16px;font-size:13px;border-radius:8px;cursor:pointer;font-weight:600;
   font-family:inherit;display:inline-flex;align-items:center;gap:6px;border:none;transition:all .15s;}
 .btn-primary{background:var(--blue2);color:#fff;}.btn-primary:hover{background:var(--blue);}
@@ -341,19 +361,81 @@ function ok(data) {
 <!-- MAIN REPORT (ซ่อนก่อน) -->
 <div id="main-section" style="display:none;">
   <div class="controls">
+    <!-- เดือน: multi-select -->
     <div class="ctrl-grp">
       <label>เดือน</label>
-      <select id="sel-month" onchange="loadReport()"></select>
+      <div class="ms-wrap" id="ms-month-wrap">
+        <button class="ms-btn" id="ms-month-btn" onclick="toggleMs('month')">
+          <span id="ms-month-label">เลือกเดือน...</span>
+          <span class="ms-arrow">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-month-panel">
+          <div class="ms-search"><input type="text" placeholder="ค้นหาเดือน..." oninput="filterMsOptions('month',this.value)"></div>
+          <div class="ms-item ms-select-all" onclick="toggleAllMs('month')">
+            <input type="checkbox" id="ms-month-all"> เลือกทั้งหมด
+          </div>
+          <div id="ms-month-list"></div>
+        </div>
+      </div>
     </div>
+    <!-- กลุ่มบุคคล -->
+    <div class="ctrl-grp">
+      <label>กลุ่มบุคคลเข้าออก</label>
+      <div class="ms-wrap" id="ms-grp-wrap">
+        <button class="ms-btn" id="ms-grp-btn" onclick="toggleMs('grp')">
+          <span id="ms-grp-label">ทั้งหมด</span>
+          <span class="ms-arrow">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-grp-panel">
+          <div class="ms-search"><input type="text" placeholder="ค้นหากลุ่ม..." oninput="filterMsOptions('grp',this.value)"></div>
+          <div class="ms-item ms-select-all" onclick="toggleAllMs('grp')">
+            <input type="checkbox" id="ms-grp-all"> เลือกทั้งหมด
+          </div>
+          <div id="ms-grp-list"></div>
+        </div>
+      </div>
+    </div>
+    <!-- บุคคลเข้าออก -->
+    <div class="ctrl-grp">
+      <label>บุคคลเข้าออก</label>
+      <div class="ms-wrap" id="ms-person-wrap">
+        <button class="ms-btn" id="ms-person-btn" onclick="toggleMs('person')">
+          <span id="ms-person-label">ทั้งหมด</span>
+          <span class="ms-arrow">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-person-panel">
+          <div class="ms-search"><input type="text" placeholder="ค้นหาบุคคล..." oninput="filterMsOptions('person',this.value)"></div>
+          <div class="ms-item ms-select-all" onclick="toggleAllMs('person')">
+            <input type="checkbox" id="ms-person-all"> เลือกทั้งหมด
+          </div>
+          <div id="ms-person-list"></div>
+        </div>
+      </div>
+    </div>
+    <!-- วัตถุประสงค์ -->
     <div class="ctrl-grp">
       <label>วัตถุประสงค์</label>
-      <select id="sel-obj" onchange="loadReport()"></select>
+      <div class="ms-wrap" id="ms-obj-wrap">
+        <button class="ms-btn" id="ms-obj-btn" onclick="toggleMs('obj')">
+          <span id="ms-obj-label">ทั้งหมด</span>
+          <span class="ms-arrow">▼</span>
+        </button>
+        <div class="ms-panel" id="ms-obj-panel">
+          <div class="ms-search"><input type="text" placeholder="ค้นหาวัตถุประสงค์..." oninput="filterMsOptions('obj',this.value)"></div>
+          <div class="ms-item ms-select-all" onclick="toggleAllMs('obj')">
+            <input type="checkbox" id="ms-obj-all"> เลือกทั้งหมด
+          </div>
+          <div id="ms-obj-list"></div>
+        </div>
+      </div>
     </div>
+    <!-- ค้นหา -->
     <div class="ctrl-grp">
       <label>ค้นหา</label>
       <input type="text" id="inp-search" placeholder="ทะเบียน / ชื่อ / ฝ่าย..." oninput="filterTable()">
     </div>
     <div class="ctrl-right">
+      <button class="btn btn-outline" onclick="resetFilters()">↺ ล้างตัวกรอง</button>
       <button class="btn btn-outline" onclick="loadReport()">🔄 รีเฟรช</button>
       <button class="btn btn-print btn-lg" onclick="printReport()">🖨 พิมพ์รายงาน</button>
       <button class="btn btn-outline" onclick="showSetup()">⚙️ ตั้งค่า</button>
@@ -461,33 +543,27 @@ function callGS(params) {
     .catch(err => { console.warn('GS:', err.message); throw err; });
 }
 
+// ── MULTI-SELECT STATE ──
+const msState = { month: new Set(), grp: new Set(), person: new Set(), obj: new Set() };
+const msData  = { month: [], grp: [], person: [], obj: [] };
+
 // ── META (months, objectives) ──
 async function loadMeta() {
   try {
     const d = await callGS({ action: 'getMeta' });
     setConn(true);
-    // เดือน
-    const selM = document.getElementById('sel-month');
-    const curM = selM.value;
-    selM.innerHTML = '';
-    (d.months || []).forEach(m => {
+    msData.month = (d.months || []).map(m => {
       const [y, mo] = m.split('-');
-      const label = thMonth(parseInt(mo)) + ' ' + (parseInt(y) + 543);
-      selM.innerHTML += `<option value="${m}">${label}</option>`;
+      return { value: m, label: thMonth(parseInt(mo)) + ' ' + (parseInt(y) + 543) };
     });
-    if (curM && [...selM.options].find(o => o.value === curM)) selM.value = curM;
-
-    // วัตถุประสงค์
-    const selO = document.getElementById('sel-obj');
-    const curO = selO.value || 'ดูรถใหม่';
-    selO.innerHTML = '<option value="ALL">— ทั้งหมด —</option>';
-    (d.objectives || []).forEach(obj => {
-      selO.innerHTML += `<option value="${obj}">${obj}</option>`;
-    });
-    // ตั้งค่า default = ดูรถใหม่
-    const match = [...selO.options].find(o => o.value === curO);
-    if (match) selO.value = curO;
-
+    msData.obj = (d.objectives || []).map(o => ({ value: o, label: o }));
+    buildMsOptions('month');
+    buildMsOptions('obj');
+    // default เลือกเดือนล่าสุด
+    if (msData.month.length > 0) {
+      msState.month.add(msData.month[0].value);
+      updateMsBtn('month');
+    }
   } catch(e) {
     setConn(false);
     console.error('loadMeta error:', e.message);
@@ -496,22 +572,33 @@ async function loadMeta() {
   }
 }
 
-// ── LOAD REPORT ──
+// ── LOAD REPORT (ดึงทุกเดือนที่เลือก) ──
 async function loadReport() {
-  const month = document.getElementById('sel-month').value;
-  const obj   = document.getElementById('sel-obj').value;
-  if (!month) return;
+  const months = [...msState.month];
+  if (months.length === 0) { alert('กรุณาเลือกเดือนอย่างน้อย 1 เดือน'); return; }
 
   document.getElementById('tbl-body').innerHTML =
     '<tr><td colspan="11"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
 
   try {
-    const params = { action: 'getData', month };
-    if (obj && obj !== 'ALL') params.obj = obj;
-    const d = await callGS(params);
-    allRows = d.rows || [];
+    // ดึงทุกเดือนพร้อมกัน
+    const results = await Promise.all(months.map(month => callGS({ action: 'getData', month })));
+    allRows = results.flatMap(d => d.rows || []);
+    // เรียงวันที่
+    allRows.sort((a, b) => {
+      const ta = parseDateTime(a['วันเวลาเริ่มบันทึก'] || a['วันที่']);
+      const tb = parseDateTime(b['วันเวลาเริ่มบันทึก'] || b['วันที่']);
+      return ta - tb;
+    });
     setConn(true);
-    renderTable();
+    // populate กลุ่มบุคคลและบุคคลจาก data จริง
+    const grps    = [...new Set(allRows.map(r => findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล')).filter(Boolean))].sort();
+    const persons = [...new Set(allRows.map(r => findCol(r,'บุคคลเข้าออก','ชื่อบุคคล','บุคคล','ชื่อ')).filter(Boolean))].sort();
+    msData.grp    = grps.map(v => ({ value: v, label: v }));
+    msData.person = persons.map(v => ({ value: v, label: v }));
+    buildMsOptions('grp');
+    buildMsOptions('person');
+    filterTable();
     updateStats();
     updateTitle();
   } catch(e) {
@@ -521,10 +608,123 @@ async function loadReport() {
   }
 }
 
-// ── FILTER (client-side search) ──
+// ── FILTER (client-side) ──
 function filterTable() {
+  const q       = document.getElementById('inp-search').value.trim().toLowerCase();
+  const selGrps = msState.grp;
+  const selPers = msState.person;
+  const selObjs = msState.obj;
+
+  filteredRows = allRows.filter(r => {
+    if (selGrps.size > 0) {
+      const v = findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล') || '';
+      if (!selGrps.has(v)) return false;
+    }
+    if (selPers.size > 0) {
+      const v = findCol(r,'บุคคลเข้าออก','ชื่อบุคคล','บุคคล','ชื่อ') || '';
+      if (!selPers.has(v)) return false;
+    }
+    if (selObjs.size > 0) {
+      const v = findCol(r,'วัตถุประสงค์','วัตถุ') || '';
+      if (!selObjs.has(v)) return false;
+    }
+    if (q) {
+      return Object.values(r).some(v => String(v).toLowerCase().includes(q));
+    }
+    return true;
+  });
+
   renderTable();
 }
+
+function resetFilters() {
+  msState.grp.clear(); msState.person.clear(); msState.obj.clear();
+  ['grp','person','obj'].forEach(k => { updateMsBtn(k); buildMsOptions(k); });
+  document.getElementById('inp-search').value = '';
+  filterTable();
+}
+
+// ── MULTI-SELECT HELPERS ──
+function buildMsOptions(key) {
+  const list = document.getElementById('ms-' + key + '-list');
+  if (!list) return;
+  list.innerHTML = msData[key].map(item => `
+    <div class="ms-item" onclick="toggleMsItem('${key}','${item.value.replace(/'/g,"\'")}',this)">
+      <input type="checkbox" ${msState[key].has(item.value) ? 'checked' : ''}>
+      <span>${item.label}</span>
+    </div>`).join('');
+  updateMsAll(key);
+}
+
+function filterMsOptions(key, q) {
+  const list = document.getElementById('ms-' + key + '-list');
+  const items = list.querySelectorAll('.ms-item');
+  const lq = q.toLowerCase();
+  items.forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(lq) ? '' : 'none';
+  });
+}
+
+function toggleMs(key) {
+  const panel = document.getElementById('ms-' + key + '-panel');
+  const btn   = document.getElementById('ms-' + key + '-btn');
+  const isOpen = panel.classList.contains('open');
+  // ปิดทุก panel ก่อน
+  document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.ms-btn').forEach(b => b.classList.remove('active'));
+  if (!isOpen) { panel.classList.add('open'); btn.classList.add('active'); }
+}
+
+function toggleMsItem(key, value, el) {
+  const cb = el.querySelector('input[type=checkbox]');
+  if (msState[key].has(value)) { msState[key].delete(value); cb.checked = false; }
+  else { msState[key].add(value); cb.checked = true; }
+  updateMsBtn(key);
+  updateMsAll(key);
+  if (key === 'month') loadReport();
+  else filterTable();
+}
+
+function toggleAllMs(key) {
+  const allCb = document.getElementById('ms-' + key + '-all');
+  const willCheck = !allCb.checked;
+  allCb.checked = willCheck;
+  if (willCheck) msData[key].forEach(item => msState[key].add(item.value));
+  else msState[key].clear();
+  buildMsOptions(key);
+  updateMsBtn(key);
+  if (key === 'month') loadReport();
+  else filterTable();
+}
+
+function updateMsAll(key) {
+  const allCb = document.getElementById('ms-' + key + '-all');
+  if (!allCb) return;
+  allCb.checked = msData[key].length > 0 && msState[key].size === msData[key].length;
+}
+
+function updateMsBtn(key) {
+  const lbl = document.getElementById('ms-' + key + '-label');
+  const btn = document.getElementById('ms-' + key + '-btn');
+  const n = msState[key].size;
+  const total = msData[key].length;
+  if (n === 0) { lbl.textContent = key === 'month' ? 'เลือกเดือน...' : 'ทั้งหมด'; btn.innerHTML = lbl.outerHTML + '<span class="ms-arrow">▼</span>'; }
+  else if (n === total && total > 0) { lbl.textContent = 'ทั้งหมด (' + total + ')'; btn.innerHTML = lbl.outerHTML + '<span class="ms-arrow">▼</span>'; }
+  else {
+    const names = [...msState[key]].slice(0,2).map(v => { const found = msData[key].find(i=>i.value===v); return found ? found.label : v; });
+    const extra = n > 2 ? ' +' + (n-2) : '';
+    lbl.textContent = names.join(', ') + extra;
+    btn.innerHTML = lbl.outerHTML + '<span class="ms-tag">' + n + '</span><span class="ms-arrow">▼</span>';
+  }
+}
+
+// ปิด dropdown เมื่อคลิกนอก
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.ms-btn').forEach(b => b.classList.remove('active'));
+  }
+});
 
 // ── RENDER ──
 function renderTable() {
