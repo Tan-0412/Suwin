@@ -186,9 +186,25 @@ tr:hover td{background:#f7fafc;}
       </div>
       <pre class="code" id="gs-code">// ═══════════════════════════════════════════════════
 //  รายงานการเข้าออก — Google Apps Script
-//  Sheet: รายงานบันทึกการเข้าออก
+//  Sheet: รายชื่อบุคคลเข้าออก
 // ═══════════════════════════════════════════════════
-const SHEET_NAME = 'รายงานบันทึกการเข้าออก';
+const SHEET_NAME = 'รายชื่อบุคคลเข้าออก';
+
+// mapping ชื่อ column ในชีท → ชื่อที่ใช้ใน API
+// แก้ตรงนี้ถ้าชื่อ column ใน Sheets เปลี่ยน
+const COL = {
+  date:    'วันที่บันทึก',
+  plate:   'ทะเบียนรถ',
+  person:  'บุคคลเข้าออก',
+  type:    'ประเภทเข้าออก',
+  group:   'กลุ่มบุคคลเข้าออก',
+  dept:    'ฝ่าย/ฝ่ายที่ต้องการติดต่อ',
+  obj:     'วัตถุประสงค์',
+  inDT:    'วันเวลาเริ่มบันทึก',
+  inBy:    'ผู้บันทึกเริ่ม',
+  outDT:   'วันเวลาจบบันทึก',
+  outBy:   'ผู้บันทึกจบ',
+};
 
 function doGet(e) {
   const p = e.parameter;
@@ -204,20 +220,13 @@ function getData(p) {
   const sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) return [];
   const data = sh.getDataRange().getValues();
-  // หาแถว header (แถวที่มี "วันที่" เป็น cell แรกที่ไม่ว่าง)
-  let hdrRow = -1;
+
+  // หาแถว header — หา row ที่มี 'ทะเบียนรถ' หรือ 'บุคคลเข้าออก'
+  let hdrRow = 0;
   for (let i = 0; i < Math.min(10, data.length); i++) {
     const row = data[i].map(c => String(c).trim());
-    if (row.some(c => c === 'วันที่' || c.includes('วันที่บันทึก') || c.includes('ทะเบียน'))) {
+    if (row.some(c => c === 'ทะเบียนรถ' || c === 'บุคคลเข้าออก' || c === 'เริ่มบันทึก')) {
       hdrRow = i; break;
-    }
-  }
-  if (hdrRow < 0) {
-    // fallback: หา row ที่มี cell ไม่ว่างมากที่สุดใน 5 แถวแรก
-    let maxFilled = 0;
-    for (let i = 0; i < Math.min(5, data.length); i++) {
-      const filled = data[i].filter(c => c !== '' && c !== null).length;
-      if (filled > maxFilled) { maxFilled = filled; hdrRow = i; }
     }
   }
   const hdrs = data[hdrRow].map(h => String(h).trim());
@@ -225,15 +234,13 @@ function getData(p) {
   const rows = data.slice(hdrRow + 1).map(r => {
     const o = {};
     hdrs.forEach((h, i) => {
-      if (!h) return; // ข้าม header ว่าง
+      if (!h) return;
       const v = r[i];
       if (v instanceof Date) {
-        // ตรวจว่าเป็น time-only (base date 1899-12-30) หรือ datetime จริง
         const epoch = v.getTime();
         const base1899 = new Date('1899-12-30T00:00:00Z').getTime();
         const diffDays = (epoch - base1899) / 86400000;
         if (diffDays < 1) {
-          // time-only serial
           o[h] = Utilities.formatDate(v, 'Asia/Bangkok', 'HH:mm:ss');
         } else {
           o[h] = Utilities.formatDate(v, 'Asia/Bangkok', 'dd/MM/yyyy HH:mm:ss');
@@ -243,33 +250,30 @@ function getData(p) {
       }
     });
     return o;
-  }).filter(r => { const v = r['วันที่']||''; return v && v !== '' && v !== '—'; });
+  }).filter(r => {
+    // กรองแถวว่าง — ต้องมีวันที่บันทึก หรือ ทะเบียนรถ
+    const d = r[COL.date] || '';
+    const pl = r[COL.plate] || '';
+    return (d !== '' && d !== '—') || pl !== '';
+  });
 
-  // filter ตาม month และ objective ถ้าส่งมา
+  // filter ตาม month
   let filtered = rows;
   if (p.month) {
     filtered = filtered.filter(r => {
-      const ym = getYearMonth(r['วันที่']);
+      const ym = getYearMonth(r[COL.date] || r[COL.inDT] || '');
       return ym === p.month;
-    });
-  }
-  if (p.obj && p.obj !== 'ALL') {
-    const objQ = String(p.obj).trim().toLowerCase();
-    filtered = filtered.filter(r => {
-      const val = String(r['วัตถุประสงค์'] || r['วัตถุ'] || '').trim().toLowerCase();
-      return val === objQ || val.includes(objQ);
     });
   }
 
   // เรียงตามวันเวลาเริ่มบันทึก น้อย→มาก
   filtered.sort((a, b) => {
-    const ta = parseDateTime(a['วันเวลาเริ่มบันทึก'] || a['วันที่']);
-    const tb = parseDateTime(b['วันเวลาเริ่มบันทึก'] || b['วันที่']);
+    const ta = parseDateTime(a[COL.inDT] || a[COL.date] || '');
+    const tb = parseDateTime(b[COL.inDT] || b[COL.date] || '');
     return ta - tb;
   });
 
-  // limit จำนวน rows ที่ส่งกลับ (ป้องกัน payload ใหญ่เกิน)
-  const limit = parseInt(p.limit) || 500;
+  const limit = parseInt(p.limit) || 1000;
   return filtered.slice(0, limit);
 }
 
@@ -278,29 +282,29 @@ function getMeta() {
   const sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) return { months: [], objectives: [] };
   const data = sh.getDataRange().getValues();
-  let hdrRow = 2;
+
+  let hdrRow = 0;
   for (let i = 0; i < Math.min(10, data.length); i++) {
-    if (String(data[i][0]).includes('วันที่')) { hdrRow = i; break; }
+    const row = data[i].map(c => String(c).trim());
+    if (row.some(c => c === 'ทะเบียนรถ' || c === 'บุคคลเข้าออก')) { hdrRow = i; break; }
   }
   const hdrs = data[hdrRow].map(h => String(h).trim());
-  const ymIdx = hdrs.findIndex(h => h.includes('วันที่'));
-  const objIdx = hdrs.findIndex(h => h.includes('วัตถุ'));
+  const dateIdx = hdrs.findIndex(h => h === COL.date || h === COL.inDT || h.includes('วันที่'));
+  const objIdx  = hdrs.findIndex(h => h === COL.obj || h.includes('วัตถุ'));
 
   const months = new Set();
   const objectives = new Set();
   data.slice(hdrRow + 1).forEach(r => {
-    if (r[ymIdx]) {
-      const v = r[ymIdx];
+    if (r[dateIdx]) {
+      const v = r[dateIdx];
       let ym = '';
       if (v instanceof Date) {
         ym = Utilities.formatDate(v, 'Asia/Bangkok', 'yyyy-MM');
       } else {
-        // parse dd/MM/yyyy manually
-        const s = String(v).trim();
+        const s = String(v).trim().split(' ')[0];
         const parts = s.split('/');
         if (parts.length >= 3) {
-          const dd = parts[0], mm = parts[1].padStart(2,'0'), yyyy = parts[2].split(' ')[0];
-          ym = yyyy + '-' + mm;
+          ym = parts[2].padStart(4,'0') + '-' + parts[1].padStart(2,'0');
         }
       }
       if (ym) months.add(ym);
@@ -592,8 +596,8 @@ async function loadReport() {
     });
     setConn(true);
     // populate กลุ่มบุคคลและบุคคลจาก data จริง
-    const grps    = [...new Set(allRows.map(r => findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล')).filter(Boolean))].sort();
-    const persons = [...new Set(allRows.map(r => findCol(r,'บุคคลเข้าออก','ชื่อบุคคล','บุคคล','ชื่อ')).filter(Boolean))].sort();
+    const grps    = [...new Set(allRows.map(r => r['กลุ่มบุคคลเข้าออก']).filter(Boolean))].sort();
+    const persons = [...new Set(allRows.map(r => r['บุคคลเข้าออก']).filter(Boolean))].sort();
     msData.grp    = grps.map(v => ({ value: v, label: v }));
     msData.person = persons.map(v => ({ value: v, label: v }));
     buildMsOptions('grp');
@@ -615,17 +619,18 @@ function filterTable() {
   const selPers = msState.person;
   const selObjs = msState.obj;
 
+  // หา key จริงจาก row แรก
   filteredRows = allRows.filter(r => {
     if (selGrps.size > 0) {
-      const v = findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล') || '';
+      const v = (r['กลุ่มบุคคลเข้าออก'] || '').trim();
       if (!selGrps.has(v)) return false;
     }
     if (selPers.size > 0) {
-      const v = findCol(r,'บุคคลเข้าออก','ชื่อบุคคล','บุคคล','ชื่อ') || '';
+      const v = (r['บุคคลเข้าออก'] || '').trim();
       if (!selPers.has(v)) return false;
     }
     if (selObjs.size > 0) {
-      const v = findCol(r,'วัตถุประสงค์','วัตถุ') || '';
+      const v = (r['วัตถุประสงค์'] || '').trim();
       if (!selObjs.has(v)) return false;
     }
     if (q) {
@@ -648,11 +653,14 @@ function resetFilters() {
 function buildMsOptions(key) {
   const list = document.getElementById('ms-' + key + '-list');
   if (!list) return;
-  list.innerHTML = msData[key].map(item => `
-    <div class="ms-item" onclick="toggleMsItem('${key}','${item.value.replace(/'/g,"\'")}',this)">
-      <input type="checkbox" ${msState[key].has(item.value) ? 'checked' : ''}>
+  list.innerHTML = msData[key].map(item => {
+    const val = item.value.replace(/\/g,'\\').replace(/'/g,"\'").replace(/"/g,'&quot;');
+    const checked = msState[key].has(item.value) ? 'checked' : '';
+    return `<div class="ms-item" onclick="toggleMsItem('${key}','${val}',this,false)">
+      <input type="checkbox" ${checked} onclick="event.stopPropagation();toggleMsItem('${key}','${val}',this.parentElement,true)">
       <span>${item.label}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   updateMsAll(key);
 }
 
@@ -675,10 +683,12 @@ function toggleMs(key) {
   if (!isOpen) { panel.classList.add('open'); btn.classList.add('active'); }
 }
 
-function toggleMsItem(key, value, el) {
+function toggleMsItem(key, value, el, fromCheckbox) {
   const cb = el.querySelector('input[type=checkbox]');
-  if (msState[key].has(value)) { msState[key].delete(value); cb.checked = false; }
-  else { msState[key].add(value); cb.checked = true; }
+  // ถ้า click มาจาก checkbox ให้ใช้ค่า checked จาก checkbox โดยตรง
+  const shouldAdd = fromCheckbox ? cb.checked : !msState[key].has(value);
+  if (shouldAdd) { msState[key].add(value); cb.checked = true; }
+  else { msState[key].delete(value); cb.checked = false; }
   updateMsBtn(key);
   updateMsAll(key);
   if (key === 'month') loadReport();
@@ -745,17 +755,18 @@ function renderTable() {
 
   let html = '';
   filteredRows.forEach((r, i) => {
-    const dayStr  = formatDateShort(r['วันที่']);
+    const dayStr  = formatDateShort(r['วันที่บันทึก'] || r['วันที่'] || '');
     const plate   = r['ทะเบียนรถ'] || '—';
-    const type    = findCol(r,'ประเภทเข้าออก','ประเภท เข้าออก','ประเภท') || '—';
-    const grp     = findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล') || '—';
-    const dept    = findCol(r,'ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย') || '—';
-    const obj     = findCol(r,'วัตถุประสงค์','วัตถุ') || '—';
-    const inDT    = formatDT(findCol(r,'วันเวลาเริ่มบันทึก','เริ่มบันทึก')) || '—';
-    const inBy    = findCol(r,'ผู้บันทึกเริ่ม','ผู้บันทึก') || '—';
-    const outDT   = formatDT(findCol(r,'วันเวลาจบบันทึก','จบบันทึก')) || '—';
-    const outBy   = findCol(r,'ผู้บันทึกจบ') || '—';
-    const ym      = makeYearMonth(r['วันที่']); // สร้างใหม่จาก วันที่ แทนการพึ่ง Sheet
+    const person  = r['บุคคลเข้าออก'] || '—';
+    const type    = r['ประเภทเข้าออก'] || findCol(r,'ประเภทเข้าออก','ประเภท') || '—';
+    const grp     = r['กลุ่มบุคคลเข้าออก'] || findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล') || '—';
+    const dept    = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || findCol(r,'ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย') || '—';
+    const obj     = r['วัตถุประสงค์'] || '—';
+    const inDT    = formatDT(r['วันเวลาเริ่มบันทึก'] || r['เริ่มบันทึก'] || '');
+    const inBy    = r['ผู้บันทึกเริ่ม'] || '—';
+    const outDT   = formatDT(r['วันเวลาจบบันทึก'] || r['จบการบันทึก'] || '');
+    const outBy   = r['ผู้บันทึกจบ'] || '—';
+    const ym      = makeYearMonth(r['วันที่บันทึก'] || r['วันเวลาเริ่มบันทึก'] || '');
     const isIn    = type.includes('เข้า');
     html += `<tr>
       <td class="td-num">${i + 1}</td>
@@ -777,10 +788,10 @@ function renderTable() {
 // ── STATS ──
 function updateStats() {
   const total  = allRows.length;
-  const inCnt  = allRows.filter(r => (findCol(r,'ประเภทเข้าออก','ประเภท')||'').includes('เข้า')).length;
-  const outCnt = allRows.filter(r => (findCol(r,'ประเภทเข้าออก','ประเภท')||'').includes('ออก')).length;
+  const inCnt  = allRows.filter(r => (r['ประเภทเข้าออก']||'').includes('เข้า')).length;
+  const outCnt = allRows.filter(r => (r['ประเภทเข้าออก']||'').includes('ออก')).length;
   const plates = new Set(allRows.map(r => r['ทะเบียนรถ']).filter(Boolean)).size;
-  const days   = new Set(allRows.map(r => (r['วันที่']||'').split(' ')[0]).filter(Boolean)).size;
+  const days   = new Set(allRows.map(r => (r['วันที่บันทึก']||r['วันที่']||'').split(' ')[0]).filter(Boolean)).size;
 
   document.getElementById('stat-row').innerHTML = `
     <div class="stat-card"><div class="stat-num" style="color:var(--blue);">${total}</div><div class="stat-lbl">📋 รายการทั้งหมด</div></div>
@@ -816,8 +827,8 @@ function printReport() {
     const dayStr = formatDateShort(r['วันที่']);
     const plate  = r['ทะเบียนรถ'] || '—';
     const type   = findCol(r,'ประเภทเข้าออก','ประเภท เข้าออก','ประเภท') || '—';
-    const grp    = findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล เข้าออก','กลุ่มบุคคล') || '—';
-    const dept   = findCol(r,'ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย') || '—';
+    const grp    = r['กลุ่มบุคคลเข้าออก'] || findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล') || '—';
+    const dept   = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || findCol(r,'ฝ่าย/ฝ่ายที่ต้องการติดต่อ','ฝ่าย') || '—';
     const obj    = findCol(r,'วัตถุประสงค์','วัตถุ') || '—';
     const inDT   = formatDT(findCol(r,'วันเวลาเริ่มบันทึก','เริ่มบันทึก')) || '—';
     const inBy   = findCol(r,'ผู้บันทึกเริ่ม','ผู้บันทึก') || '—';
