@@ -537,7 +537,7 @@ function showSetup() {
 
 // ── CONNECT ──
 function connectGS() {
-  const url = document.getElementById('gs-url').value.trim();
+  const url = document.getElementById('gs-url').value.trim().replace(/\s+/g, '');
   if (!url.includes('script.google.com')) {
     document.getElementById('setup-st').innerHTML = '<span style="color:var(--red);">❌ URL ไม่ถูกต้อง — ต้องเป็น script.google.com</span>';
     return;
