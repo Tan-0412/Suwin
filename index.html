@@ -4,6 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>รายงานการเข้าออก — บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/Suwin/manifest.json">
+<meta name="theme-color" content="#1565C0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="InOut Report">
+<link rel="apple-touch-icon" href="/Suwin/icon-192.png">
+
+<!-- OG / Line preview -->
+<meta property="og:title" content="รายงานบันทึกการเข้าออก">
+<meta property="og:description" content="บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)">
+<meta property="og:image" content="https://tan-0412.github.io/Suwin/icon-512.png">
+<meta property="og:url" content="https://tan-0412.github.io/Suwin/">
+<meta property="og:type" content="website">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/Suwin/sw.js', { scope: '/Suwin/' });
+  }
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
