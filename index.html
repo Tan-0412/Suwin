@@ -709,7 +709,7 @@ function buildMsOptions(key) {
   const list = document.getElementById('ms-' + key + '-list');
   if (!list) return;
   list.innerHTML = msData[key].map(item => {
-    const val = item.value.replace(/\/g,'\\').replace(/'/g,"\'").replace(/"/g,'&quot;');
+    const val = encodeURIComponent(item.value);
     const checked = msState[key].has(item.value) ? 'checked' : '';
     return `<div class="ms-item" onclick="toggleMsItem('${key}','${val}',this,false)">
       <input type="checkbox" ${checked} onclick="event.stopPropagation();toggleMsItem('${key}','${val}',this.parentElement,true)">
@@ -739,8 +739,8 @@ function toggleMs(key) {
 }
 
 function toggleMsItem(key, value, el, fromCheckbox) {
+  value = decodeURIComponent(value);
   const cb = el.querySelector('input[type=checkbox]');
-  // ถ้า click มาจาก checkbox ให้ใช้ค่า checked จาก checkbox โดยตรง
   const shouldAdd = fromCheckbox ? cb.checked : !msState[key].has(value);
   if (shouldAdd) { msState[key].add(value); cb.checked = true; }
   else { msState[key].delete(value); cb.checked = false; }
