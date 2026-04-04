@@ -1192,6 +1192,18 @@ function formatDate(s) {
   return `${d} ${TH_MONTHS[m]} ${y + 543}`;
 }
 
+function parseDateTime(s) {
+  if (!s) return 0;
+  var parts = String(s).split(' ');
+  var dp = parts[0].split('/');
+  if (dp.length < 3) return 0;
+  var y = dp[2].substring(0, 4);
+  var m = ('0' + dp[1]).slice(-2);
+  var d = ('0' + dp[0]).slice(-2);
+  var timeStr = parts[1] || '00:00:00';
+  return new Date(y + '-' + m + '-' + d + 'T' + timeStr).getTime();
+}
+
 function formatDT(s) {
   if (!s) return '—';
   const parts = String(s).split(' ');
