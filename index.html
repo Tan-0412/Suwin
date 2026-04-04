@@ -353,7 +353,7 @@ function ok(data) {
       <div class="dvd"></div>
       <div style="font-size:13px;font-weight:700;margin-bottom:8px;">🔗 URL ของ Apps Script</div>
       <div class="setup-row">
-        <input type="text" id="gs-url" placeholder="https://script.google.com/macros/s/xxx/exec">
+        <input type="text" id="gs-url" placeholder="https://script.google.com/macros/s/AKfycbzLZ9R5WtM9dzsKi201_PwzwQci9jz2kjx1osliUkiVVCTRZQRvJWknCezOdDRxgm_G/exec">
         <button class="btn btn-primary" onclick="connectGS()">🔌 เชื่อมต่อ</button>
         <button class="btn btn-outline" id="btn-test" onclick="testConn()" style="display:none;">🧪 ทดสอบ</button>
       </div>
@@ -496,7 +496,7 @@ function ok(data) {
 
 <script>
 // ── CONFIG ──
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbz2rIGnLqtz2pqL0AkE8VlQnB8XLJCg7mNMmhAAZ7V0mVwdXBwENA_kR322i5JUyjc4/exec';
+const HARDCODED_URL = ''; // วาง URL ที่นี่ถ้าต้องการฝังไว้
 
 // รับ ?gs= จาก URL แล้วเก็บลง localStorage อัตโนมัติ (สำหรับลิงค์แชร์)
 (function(){
@@ -511,22 +511,17 @@ let allRows = [];
 let filteredRows = [];
 
 // ── INIT ──
-window.onload = async function() {
+window.onload = function() {
   if (gsUrl) {
     showMain();
-    // แสดง share link
+    loadMeta().then(() => loadReport());
+    // แสดง share box ถ้ามี URL แล้ว (สำหรับคนที่เคยเชื่อมต่อแล้ว)
     const base = window.location.origin + window.location.pathname;
     const shareInput = document.getElementById('share-url-txt');
     if (shareInput) {
       shareInput.value = base + '?gs=' + encodeURIComponent(gsUrl);
-      const shareBox = document.getElementById('share-box');
-      if (shareBox) shareBox.style.display = '';
+      document.getElementById('share-box').style.display = '';
     }
-    // รอ loadMeta เสร็จก่อน (เพื่อให้ msState.month มีค่า) แล้วค่อย loadReport
-    try {
-      await loadMeta();
-      if (msState.month.size > 0) await loadReport();
-    } catch(e) { console.error('Init error:', e); }
   }
 };
 
@@ -616,7 +611,7 @@ async function loadMeta() {
 // ── LOAD REPORT (ดึงทุกเดือนที่เลือก) ──
 async function loadReport() {
   const months = [...msState.month];
-  if (months.length === 0) { return; } // ไม่แสดง alert — รอ loadMeta เลือกเดือนให้ก่อน
+  if (months.length === 0) { alert('กรุณาเลือกเดือนอย่างน้อย 1 เดือน'); return; }
 
   document.getElementById('tbl-body').innerHTML =
     '<tr><td colspan="11"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
@@ -691,7 +686,7 @@ function buildMsOptions(key) {
   const list = document.getElementById('ms-' + key + '-list');
   if (!list) return;
   list.innerHTML = msData[key].map(item => {
-    const val = encodeURIComponent(item.value);
+    const val = item.value.replace(/\/g,'\\').replace(/'/g,"\'").replace(/"/g,'&quot;');
     const checked = msState[key].has(item.value) ? 'checked' : '';
     return `<div class="ms-item" onclick="toggleMsItem('${key}','${val}',this,false)">
       <input type="checkbox" ${checked} onclick="event.stopPropagation();toggleMsItem('${key}','${val}',this.parentElement,true)">
@@ -721,7 +716,6 @@ function toggleMs(key) {
 }
 
 function toggleMsItem(key, value, el, fromCheckbox) {
-  value = decodeURIComponent(value);
   const cb = el.querySelector('input[type=checkbox]');
   // ถ้า click มาจาก checkbox ให้ใช้ค่า checked จาก checkbox โดยตรง
   const shouldAdd = fromCheckbox ? cb.checked : !msState[key].has(value);
