@@ -611,7 +611,7 @@ async function loadMeta() {
 // ── LOAD REPORT (ดึงทุกเดือนที่เลือก) ──
 async function loadReport() {
   const months = [...msState.month];
-  if (months.length === 0) { alert('กรุณาเลือกเดือนอย่างน้อย 1 เดือน'); return; }
+  if (months.length === 0) { return; }
 
   document.getElementById('tbl-body').innerHTML =
     '<tr><td colspan="11"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
