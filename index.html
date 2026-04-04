@@ -837,20 +837,20 @@ function updateStats() {
 
 // ── TITLE ──
 function updateTitle() {
-  const selM = document.getElementById('sel-month');
-  const selO = document.getElementById('sel-obj');
-  const mLbl = selM.options[selM.selectedIndex]?.text || '';
-  const oLbl = selO.value === 'ALL' ? 'ทุกวัตถุประสงค์' : selO.value;
-  document.getElementById('tbl-title').textContent = `รายงานการเข้าออก — ${oLbl}`;
-  document.getElementById('tbl-sub').textContent = `เดือน ${mLbl} · บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)`;
+  const months = [...msState.month];
+  const mLbl = months.length === 0 ? 'ทุกเดือน'
+    : months.map(v => { const f = msData.month.find(i => i.value === v); return f ? f.label : v; }).join(', ');
+  document.getElementById('tbl-title').textContent = 'รายงานการเข้าออก';
+  document.getElementById('tbl-sub').textContent = 'เดือน ' + mLbl + ' · บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)';
 }
 
 // ── PRINT / PDF ──
 function printReport() {
-  const selM = document.getElementById('sel-month');
-  const selO = document.getElementById('sel-obj');
-  const mLbl = selM.options[selM.selectedIndex]?.text || '';
-  const oLbl = selO.value === 'ALL' ? 'ทุกวัตถุประสงค์' : selO.value;
+  const months = [...msState.month];
+  const mLbl = months.length === 0 ? 'ทุกเดือน'
+    : months.map(v => { const f = msData.month.find(i => i.value === v); return f ? f.label : v; }).join(', ');
+  const objs = [...msState.obj];
+  const oLbl = objs.length === 0 ? 'ทุกวัตถุประสงค์' : objs.join(', ');
   const total = filteredRows.length;
   const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 
