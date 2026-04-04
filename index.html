@@ -511,10 +511,10 @@ let allRows = [];
 let filteredRows = [];
 
 // ── INIT ──
-window.onload = function() {
+window.onload = async function() {
   if (gsUrl) {
     showMain();
-    loadMeta().then(() => loadReport());
+    try { await loadMeta(); if(msState.month.size>0) await loadReport(); } catch(e){console.error(e);}
     // แสดง share box ถ้ามี URL แล้ว (สำหรับคนที่เคยเชื่อมต่อแล้ว)
     const base = window.location.origin + window.location.pathname;
     const shareInput = document.getElementById('share-url-txt');
@@ -611,7 +611,7 @@ async function loadMeta() {
 // ── LOAD REPORT (ดึงทุกเดือนที่เลือก) ──
 async function loadReport() {
   const months = [...msState.month];
-  if (months.length === 0) { alert('กรุณาเลือกเดือนอย่างน้อย 1 เดือน'); return; }
+  if (months.length === 0) { return; }
 
   document.getElementById('tbl-body').innerHTML =
     '<tr><td colspan="11"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
@@ -686,7 +686,7 @@ function buildMsOptions(key) {
   const list = document.getElementById('ms-' + key + '-list');
   if (!list) return;
   list.innerHTML = msData[key].map(item => {
-    const val = item.value.replace(/\/g,'\\').replace(/'/g,"\'").replace(/"/g,'&quot;');
+    const val = encodeURIComponent(item.value);
     const checked = msState[key].has(item.value) ? 'checked' : '';
     return `<div class="ms-item" onclick="toggleMsItem('${key}','${val}',this,false)">
       <input type="checkbox" ${checked} onclick="event.stopPropagation();toggleMsItem('${key}','${val}',this.parentElement,true)">
@@ -716,6 +716,7 @@ function toggleMs(key) {
 }
 
 function toggleMsItem(key, value, el, fromCheckbox) {
+  value = decodeURIComponent(value);
   const cb = el.querySelector('input[type=checkbox]');
   // ถ้า click มาจาก checkbox ให้ใช้ค่า checked จาก checkbox โดยตรง
   const shouldAdd = fromCheckbox ? cb.checked : !msState[key].has(value);
