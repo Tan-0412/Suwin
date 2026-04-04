@@ -4,29 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>รายงานการเข้าออก — บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด</title>
-
-<!-- PWA -->
-<link rel="manifest" href="/Suwin/manifest.json">
-<meta name="theme-color" content="#1565C0">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="InOut Report">
-<link rel="apple-touch-icon" href="/Suwin/icon-192.png">
-
-<!-- OG / Line preview -->
-<meta property="og:title" content="รายงานบันทึกการเข้าออก">
-<meta property="og:description" content="บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)">
-<meta property="og:image" content="https://tan-0412.github.io/Suwin/icon-512.png">
-<meta property="og:url" content="https://tan-0412.github.io/Suwin/">
-<meta property="og:type" content="website">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/Suwin/sw.js', { scope: '/Suwin/' });
-  }
-</script>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -381,6 +358,15 @@ function ok(data) {
         <button class="btn btn-outline" id="btn-test" onclick="testConn()" style="display:none;">🧪 ทดสอบ</button>
       </div>
       <div class="setup-st" id="setup-st"></div>
+      <!-- กล่องลิงค์แชร์ -->
+      <div id="share-box" style="display:none;margin-top:12px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:7px;">🔗 ลิงค์แชร์ให้ทีม — เปิดลิงค์นี้จะเชื่อมต่อ Sheets อัตโนมัติ ไม่ต้องกรอก URL เอง</div>
+        <div style="display:flex;gap:7px;align-items:center;">
+          <input type="text" id="share-url-txt" readonly style="flex:1;font-size:11px;padding:6px 9px;border-radius:7px;border:1px solid #A5D6A7;background:#fff;color:#1B5E20;font-family:monospace;overflow:hidden;text-overflow:ellipsis;">
+          <button class="btn btn-primary" onclick="copyShareUrl()" style="font-size:11px;padding:6px 12px;white-space:nowrap;">📋 คัดลอกลิงค์</button>
+        </div>
+        <div id="share-copy-ok" style="font-size:11px;color:#2E7D32;margin-top:5px;display:none;">✅ คัดลอกแล้ว! วางลิงค์นี้ใน Line ให้ทีมได้เลย</div>
+      </div>
     </div>
   </div>
 </div>
@@ -511,15 +497,31 @@ function ok(data) {
 <script>
 // ── CONFIG ──
 const HARDCODED_URL = ''; // วาง URL ที่นี่ถ้าต้องการฝังไว้
+
+// รับ ?gs= จาก URL แล้วเก็บลง localStorage อัตโนมัติ (สำหรับลิงค์แชร์)
+(function(){
+  const qsGs = new URLSearchParams(window.location.search).get('gs');
+  if (qsGs && qsGs.includes('script.google.com')) {
+    localStorage.setItem('rpt_url', qsGs);
+  }
+})();
+
 let gsUrl = localStorage.getItem('rpt_url') || HARDCODED_URL;
-let allRows = []; // ข้อมูลทั้งหมดที่ดึงมา
-let filteredRows = []; // หลัง filter
+let allRows = [];
+let filteredRows = [];
 
 // ── INIT ──
 window.onload = function() {
   if (gsUrl) {
     showMain();
     loadMeta().then(() => loadReport());
+    // แสดง share box ถ้ามี URL แล้ว (สำหรับคนที่เคยเชื่อมต่อแล้ว)
+    const base = window.location.origin + window.location.pathname;
+    const shareInput = document.getElementById('share-url-txt');
+    if (shareInput) {
+      shareInput.value = base + '?gs=' + encodeURIComponent(gsUrl);
+      document.getElementById('share-box').style.display = '';
+    }
   }
 };
 
@@ -537,13 +539,20 @@ function showSetup() {
 function connectGS() {
   const url = document.getElementById('gs-url').value.trim();
   if (!url.includes('script.google.com')) {
-    document.getElementById('setup-st').innerHTML = '<span style="color:var(--red);">❌ URL ไม่ถูกต้อง</span>';
+    document.getElementById('setup-st').innerHTML = '<span style="color:var(--red);">❌ URL ไม่ถูกต้อง — ต้องเป็น script.google.com</span>';
     return;
   }
   gsUrl = url;
   localStorage.setItem('rpt_url', url);
   document.getElementById('btn-test').style.display = '';
-  document.getElementById('setup-st').innerHTML = '<span style="color:var(--green);">✅ บันทึก URL แล้ว — กด 🧪 ทดสอบ</span>';
+  document.getElementById('setup-st').innerHTML = '<span style="color:var(--green);">✅ บันทึก URL แล้ว กำลังทดสอบ...</span>';
+  // แสดงกล่อง share link
+  const base = window.location.origin + window.location.pathname;
+  const shareUrl = base + '?gs=' + encodeURIComponent(url);
+  document.getElementById('share-url-txt').value = shareUrl;
+  document.getElementById('share-box').style.display = '';
+  // auto test ทันที ไม่ต้องกดปุ่มทดสอบแยก
+  testConn();
 }
 
 async function testConn() {
@@ -1195,11 +1204,41 @@ function formatDT(s) {
 }
 
 function copyScript() {
-  navigator.clipboard.writeText(document.getElementById('gs-code').textContent).then(() => {
+  const text = document.getElementById('gs-code').textContent;
+  const showOk = () => {
     const el = document.getElementById('copy-ok');
     el.style.display = '';
     setTimeout(() => el.style.display = 'none', 2500);
-  });
+  };
+  // navigator.clipboard ต้องการ HTTPS — ถ้าไม่ได้ให้ fallback
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(showOk).catch(() => fallbackCopy(text, showOk));
+  } else {
+    fallbackCopy(text, showOk);
+  }
+}
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); if (cb) cb(); }
+  catch(e) { alert('กรุณากด Ctrl+A แล้ว Ctrl+C เพื่อคัดลอก Script'); }
+  document.body.removeChild(ta);
+}
+function copyShareUrl() {
+  const txt = document.getElementById('share-url-txt').value;
+  const showOk = () => {
+    const el = document.getElementById('share-copy-ok');
+    el.style.display = '';
+    setTimeout(() => el.style.display = 'none', 3000);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(showOk).catch(() => fallbackCopy(txt, showOk));
+  } else {
+    fallbackCopy(txt, showOk);
+  }
 }
 
 function toast(msg, col) {
