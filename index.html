@@ -185,13 +185,11 @@ tr:hover td{background:#f7fafc;}
         <button class="btn btn-outline" onclick="copyScript()" style="font-size:11px;padding:4px 10px;">📋 คัดลอก</button>
       </div>
       <pre class="code" id="gs-code">// ═══════════════════════════════════════════════════
-//  รายงานการเข้าออก — Google Apps Script
+//  รายงานการเข้าออก — Google Apps Script v3
 //  Sheet: รายชื่อบุคคลเข้าออก
 // ═══════════════════════════════════════════════════
 const SHEET_NAME = 'รายชื่อบุคคลเข้าออก';
 
-// mapping ชื่อ column ในชีท → ชื่อที่ใช้ใน API
-// แก้ตรงนี้ถ้าชื่อ column ใน Sheets เปลี่ยน
 const COL = {
   date:    'วันที่บันทึก',
   plate:   'ทะเบียนรถ',
@@ -215,20 +213,37 @@ function doGet(e) {
   return ok({ status: 'ready' });
 }
 
+function toYearMonth(v) {
+  if (!v && v !== 0) return '';
+  if (v instanceof Date) {
+    return Utilities.formatDate(v, 'Asia/Bangkok', 'yyyy-MM');
+  }
+  const s = String(v).trim().split(' ')[0];
+  const parts = s.split('/');
+  if (parts.length >= 3) {
+    const y = parts[2].substring(0, 4);
+    const m = parts[1].padStart(2, '0');
+    if (y.length === 4 && !isNaN(parseInt(y))) return y + '-' + m;
+  }
+  return '';
+}
+
+function findHdrRow(data) {
+  for (let i = 0; i < Math.min(10, data.length); i++) {
+    const row = data[i].map(c => String(c).trim());
+    if (row.some(c => c === 'ทะเบียนรถ' || c === 'บุคคลเข้าออก' || c === 'วันที่บันทึก')) {
+      return i;
+    }
+  }
+  return 0;
+}
+
 function getData(p) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) return [];
   const data = sh.getDataRange().getValues();
-
-  // หาแถว header — หา row ที่มี 'ทะเบียนรถ' หรือ 'บุคคลเข้าออก'
-  let hdrRow = 0;
-  for (let i = 0; i < Math.min(10, data.length); i++) {
-    const row = data[i].map(c => String(c).trim());
-    if (row.some(c => c === 'ทะเบียนรถ' || c === 'บุคคลเข้าออก' || c === 'เริ่มบันทึก')) {
-      hdrRow = i; break;
-    }
-  }
+  const hdrRow = findHdrRow(data);
   const hdrs = data[hdrRow].map(h => String(h).trim());
 
   const rows = data.slice(hdrRow + 1).map(r => {
@@ -251,29 +266,27 @@ function getData(p) {
     });
     return o;
   }).filter(r => {
-    // กรองแถวว่าง — ต้องมีวันที่บันทึก หรือ ทะเบียนรถ
-    const d = r[COL.date] || '';
-    const pl = r[COL.plate] || '';
-    return (d !== '' && d !== '—') || pl !== '';
+    const d    = r[COL.date]  || '';
+    const pl   = r[COL.plate] || '';
+    const indt = r[COL.inDT]  || '';
+    return d !== '' || pl !== '' || indt !== '';
   });
 
-  // filter ตาม month
   let filtered = rows;
   if (p.month) {
     filtered = filtered.filter(r => {
-      const ym = getYearMonth(r[COL.date] || r[COL.inDT] || '');
+      const ym = toYearMonth(r[COL.date] || r[COL.inDT] || '');
       return ym === p.month;
     });
   }
 
-  // เรียงตามวันเวลาเริ่มบันทึก น้อย→มาก
   filtered.sort((a, b) => {
     const ta = parseDateTime(a[COL.inDT] || a[COL.date] || '');
     const tb = parseDateTime(b[COL.inDT] || b[COL.date] || '');
     return ta - tb;
   });
 
-  const limit = parseInt(p.limit) || 1000;
+  const limit = parseInt(p.limit) || 2000;
   return filtered.slice(0, limit);
 }
 
@@ -282,34 +295,30 @@ function getMeta() {
   const sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) return { months: [], objectives: [] };
   const data = sh.getDataRange().getValues();
-
-  let hdrRow = 0;
-  for (let i = 0; i < Math.min(10, data.length); i++) {
-    const row = data[i].map(c => String(c).trim());
-    if (row.some(c => c === 'ทะเบียนรถ' || c === 'บุคคลเข้าออก')) { hdrRow = i; break; }
-  }
+  const hdrRow = findHdrRow(data);
   const hdrs = data[hdrRow].map(h => String(h).trim());
-  const dateIdx = hdrs.findIndex(h => h === COL.date || h === COL.inDT || h.includes('วันที่'));
-  const objIdx  = hdrs.findIndex(h => h === COL.obj || h.includes('วัตถุ'));
+
+  // หา index ของทุก column ที่เกี่ยวกับวันที่ (เก็บไว้นอก loop)
+  const dateIdxList = hdrs.reduce((acc, h, i) => {
+    if (h === COL.date || h === COL.inDT || h.includes('วันที่') || h.includes('เริ่มบันทึก')) {
+      acc.push(i);
+    }
+    return acc;
+  }, []);
+  const objIdx = hdrs.findIndex(h => h === COL.obj || h.includes('วัตถุ'));
 
   const months = new Set();
   const objectives = new Set();
+
   data.slice(hdrRow + 1).forEach(r => {
-    if (r[dateIdx]) {
-      const v = r[dateIdx];
-      let ym = '';
-      if (v instanceof Date) {
-        ym = Utilities.formatDate(v, 'Asia/Bangkok', 'yyyy-MM');
-      } else {
-        const s = String(v).trim().split(' ')[0];
-        const parts = s.split('/');
-        if (parts.length >= 3) {
-          ym = parts[2].padStart(4,'0') + '-' + parts[1].padStart(2,'0');
-        }
-      }
-      if (ym) months.add(ym);
+    // ลอง parse เดือนจากทุก date column — เจออันแรกที่ได้ผลก็พอ
+    for (const idx of dateIdxList) {
+      const ym = toYearMonth(r[idx]);
+      if (ym) { months.add(ym); break; }
     }
-    if (r[objIdx] && String(r[objIdx]).trim()) objectives.add(String(r[objIdx]).trim());
+    if (objIdx >= 0 && r[objIdx] && String(r[objIdx]).trim()) {
+      objectives.add(String(r[objIdx]).trim());
+    }
   });
 
   return {
@@ -318,29 +327,16 @@ function getMeta() {
   };
 }
 
-function getYearMonth(dateStr) {
-  if (!dateStr) return '';
-  if (dateStr instanceof Date) {
-    return Utilities.formatDate(dateStr, 'Asia/Bangkok', 'yyyy-MM');
-  }
-  const parts = String(dateStr).split('/');
-  if (parts.length >= 3) {
-    // dd/MM/yyyy — parts[0]=dd, parts[1]=MM, parts[2]=yyyy
-    const yPart = parts[2].split(' ')[0];
-    const m = parts[1].padStart(2, '0');
-    return yPart + '-' + m;
-  }
-  return '';
-}
-
 function parseDateTime(s) {
   if (!s) return 0;
   const parts = String(s).split(' ');
   const dp = parts[0].split('/');
   if (dp.length < 3) return 0;
-  const dateStr = dp[2].split(' ')[0] + '-' + dp[1].padStart(2,'0') + '-' + dp[0].padStart(2,'0');
+  const y = dp[2].substring(0, 4);
+  const m = dp[1].padStart(2, '0');
+  const d = dp[0].padStart(2, '0');
   const timeStr = parts[1] || '00:00:00';
-  return new Date(dateStr + 'T' + timeStr).getTime();
+  return new Date(y + '-' + m + '-' + d + 'T' + timeStr).getTime();
 }
 
 function ok(data) {
@@ -593,13 +589,13 @@ async function loadMeta() {
       return { value: m, label: thMonth(parseInt(mo)) + ' ' + (parseInt(y) + 543) };
     });
     msData.obj = (d.objectives || []).map(o => ({ value: o, label: o }));
-    buildMsOptions('month');
-    buildMsOptions('obj');
-    // default เลือกเดือนล่าสุด
+    // default เลือกเดือนล่าสุดก่อน build options เพื่อให้ checkbox ถูก checked ตั้งแต่แรก
     if (msData.month.length > 0) {
       msState.month.add(msData.month[0].value);
-      updateMsBtn('month');
     }
+    buildMsOptions('month');
+    buildMsOptions('obj');
+    updateMsBtn('month');
   } catch(e) {
     setConn(false);
     console.error('loadMeta error:', e.message);
@@ -611,7 +607,11 @@ async function loadMeta() {
 // ── LOAD REPORT (ดึงทุกเดือนที่เลือก) ──
 async function loadReport() {
   const months = [...msState.month];
-  if (months.length === 0) { return; }
+  if (months.length === 0) {
+    document.getElementById('tbl-body').innerHTML =
+      '<tr><td colspan="11"><div class="empty">📅 กรุณาเลือกเดือนที่ต้องการดูข้อมูล</div></td></tr>';
+    return;
+  }
 
   document.getElementById('tbl-body').innerHTML =
     '<tr><td colspan="11"><div class="loader"><div class="loader-spin"></div><br>⏳ กำลังดึงข้อมูลจาก Sheets...</div></td></tr>';
