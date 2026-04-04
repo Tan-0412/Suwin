@@ -298,13 +298,13 @@ function getMeta() {
   const hdrRow = findHdrRow(data);
   const hdrs = data[hdrRow].map(h => String(h).trim());
 
-  // หา index ของทุก column ที่เกี่ยวกับวันที่ (เก็บไว้นอก loop)
-  const dateIdxList = hdrs.reduce((acc, h, i) => {
-    if (h === COL.date || h === COL.inDT || h.includes('วันที่') || h.includes('เริ่มบันทึก')) {
-      acc.push(i);
-    }
-    return acc;
-  }, []);
+  // หา index วันที่ — เอาเฉพาะที่ match ตรงเป๊ะกับ COL.date หรือ COL.inDT เท่านั้น
+  // ไม่ใช้ includes() เพื่อไม่ให้ match column เวลา-เท่านั้น เช่น 'เริ่มบันทึก'
+  const dateIdxList = [];
+  const exactDateIdx = hdrs.findIndex(h => h === COL.date);
+  const exactInDTIdx = hdrs.findIndex(h => h === COL.inDT);
+  if (exactDateIdx >= 0) dateIdxList.push(exactDateIdx);
+  if (exactInDTIdx >= 0) dateIdxList.push(exactInDTIdx);
   const objIdx = hdrs.findIndex(h => h === COL.obj || h.includes('วัตถุ'));
 
   const months = new Set();
