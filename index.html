@@ -858,7 +858,7 @@ function printReport() {
   // Build rows HTML
   let rows = '';
   filteredRows.forEach((r, i) => {
-    const dayStr = formatDateShort(r['วันที่']);
+    const dayStr = formatDateShort(r['วันที่บันทึก'] || r['วันที่'] || '');
     const plate  = r['ทะเบียนรถ'] || '—';
     const type   = findCol(r,'ประเภทเข้าออก','ประเภท เข้าออก','ประเภท') || '—';
     const grp    = r['กลุ่มบุคคลเข้าออก'] || findCol(r,'กลุ่มบุคคลเข้าออก','กลุ่มบุคคล') || '—';
@@ -868,7 +868,7 @@ function printReport() {
     const inBy   = findCol(r,'ผู้บันทึกเริ่ม','ผู้บันทึก') || '—';
     const outDT  = formatDT(findCol(r,'วันเวลาจบบันทึก','จบบันทึก')) || '—';
     const outBy  = findCol(r,'ผู้บันทึกจบ') || '—';
-    const ym     = makeYearMonth(r['วันที่']);
+    const ym     = makeYearMonth(r['วันที่บันทึก'] || r['วันที่'] || '');
     const bg     = i % 2 === 1 ? '#EEF4FB' : '#ffffff';
     rows += `<tr style="background:${bg};">
       <td class="c-num">${i+1}</td>
