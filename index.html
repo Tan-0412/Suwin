@@ -912,66 +912,30 @@ function printReport() {
   });
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>รายงาน_${mLbl}</title>
+<title>รายงานสรุปดูรถใหม่_${mLbl}</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;background:#e8ecf0;color:#111;font-size:11px;}
-
-/* ── control bar (hidden on print) ── */
-.ctrl-bar{
-  background:#1a2332;padding:10px 20px;display:flex;align-items:center;gap:10px;
-  position:sticky;top:0;z-index:50;
-}
-.ctrl-bar span{color:rgba(255,255,255,.6);font-size:11px;margin-left:4px;}
-.pbtn{
-  padding:7px 20px;font-size:12px;font-family:'Sarabun',sans-serif;border:none;
-  border-radius:6px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;
-}
-.pbtn-red{background:#c62828;color:#fff;}.pbtn-red:hover{background:#b71c1c;}
-.pbtn-gray{background:#546e7a;color:#fff;}.pbtn-gray:hover{background:#37474f;}
-#pdf-status{color:#ffd600;font-size:12px;font-weight:600;margin-left:8px;}
-
-/* ── A4 page simulation ── */
-.a4-wrap{
-  width:210mm;min-height:297mm;margin:20px auto;background:#fff;
-  box-shadow:0 4px 32px rgba(0,0,0,.18);
-  padding:12mm 10mm 14mm 10mm;
-}
-.a4-content{width:100%;}
-
-/* ── report header ── */
+.ctrl-bar{background:#1a2332;padding:10px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
+.ctrl-bar span{color:rgba(255,255,255,.6);font-size:11px;}
+.pbtn{padding:7px 20px;font-size:12px;font-family:'Sarabun',sans-serif;border:none;border-radius:6px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+.pbtn-primary{background:#1565C0;color:#fff;}.pbtn-gray{background:#546e7a;color:#fff;}
+.a4-wrap{width:210mm;margin:20px auto;background:#fff;box-shadow:0 4px 32px rgba(0,0,0,.18);padding:12mm 10mm 14mm 10mm;}
 .rh-row1{display:flex;align-items:flex-start;margin-bottom:1mm;}
 .rh-main-title{font-size:14pt;font-weight:700;color:#0D2137;border-bottom:2.5px solid #1565C0;padding-bottom:1mm;}
-
 .rh-company{font-size:11pt;font-weight:600;color:#1565C0;margin-bottom:2mm;}
-.rh-row3{
-  display:flex;justify-content:space-between;align-items:center;
-  border-top:1px solid #CFD8DC;border-bottom:1px solid #CFD8DC;
-  padding:2mm 0;margin-bottom:3mm;
-}
-.rh-obj{font-size:10pt;}
-.rh-obj strong{color:#c0392b;}
-.rh-mon{font-size:10pt;}
-.rh-mon strong{color:#1565C0;}
-
-/* ── table ── */
+.rh-row3{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #CFD8DC;border-bottom:1px solid #CFD8DC;padding:2mm 0;margin-bottom:3mm;}
+.rh-obj{font-size:10pt;}.rh-obj strong{color:#c0392b;}
+.rh-mon{font-size:10pt;}.rh-mon strong{color:#1565C0;}
 .tbl-wrap{width:100%;overflow:hidden;border-radius:4px;border:1px solid #B0BEC5;}
 table{width:100%;border-collapse:collapse;font-size:7.5pt;}
-thead tr:first-child th{
-  background:#0D2137;color:#fff;padding:5px 4px;
-  text-align:center;font-weight:700;font-size:7pt;
-  border:1px solid #1565C0;white-space:nowrap;
-}
-thead tr:nth-child(2) th{
-  padding:3px 4px;text-align:center;font-size:6.5pt;font-weight:700;
-  border:1px solid rgba(255,255,255,.3);
-}
+thead{display:table-header-group;}
+thead tr:first-child th{background:#0D2137;color:#fff;padding:5px 4px;text-align:center;font-weight:700;font-size:7pt;border:1px solid #1565C0;white-space:nowrap;}
+thead tr:nth-child(2) th{padding:3px 4px;text-align:center;font-size:6.5pt;font-weight:700;border:1px solid rgba(255,255,255,.3);}
 thead .th-in{background:#00838F;}
 thead .th-out{background:#2E7D32;}
-td{border:1px solid #CFD8DC;padding:4px 4px;vertical-align:middle;}
+td{border:1px solid #CFD8DC;padding:4px;vertical-align:middle;}
 .c-num{text-align:center;color:#666;width:24px;}
 .c-date{text-align:center;width:44px;white-space:nowrap;}
 .c-left{text-align:left;}
@@ -982,180 +946,64 @@ td{border:1px solid #CFD8DC;padding:4px 4px;vertical-align:middle;}
 .c-in{background:#E0F7FA !important;color:#006064;font-weight:600;}
 .c-out{background:#E8F5E9 !important;color:#1B5E20;font-weight:600;}
 .c-by{text-align:center;width:36px;font-size:6.5pt;}
-.c-ym{text-align:center;width:38px;font-size:6pt;color:#888;}
-
-/* ── summary + signatures ── */
-.summary-row{
-  display:flex;justify-content:flex-end;margin-top:3mm;
-}
-.summary-box{
-  background:#0D2137;color:#fff;border-radius:5px;
-  padding:5px 16px;font-size:10pt;font-weight:700;
-}
-.sig-section{
-  display:flex;justify-content:space-between;
-  margin-top:12mm;padding:0 8mm;
-}
+.summary-row{display:flex;justify-content:flex-end;margin-top:3mm;}
+.summary-box{background:#0D2137;color:#fff;border-radius:5px;padding:5px 16px;font-size:10pt;font-weight:700;}
+.sig-section{display:flex;justify-content:space-between;margin-top:12mm;padding:0 8mm;}
 .sig-block{width:240px;}
 .sig-spacer{height:10mm;}
-.sig-line{
-  border-bottom:1.5px dotted #555;margin-bottom:3mm;
-}
+.sig-line{border-bottom:1.5px dotted #555;margin-bottom:3mm;}
 .sig-label{font-size:9.5pt;font-weight:700;color:#0D2137;text-align:center;}
-
 .print-date{text-align:center;font-size:7pt;color:#aaa;margin-top:4mm;}
-
-/* ── print media: hide controls, no shadow ── */
 @media print{
   body{background:#fff;}
   .ctrl-bar{display:none !important;}
-  .a4-wrap{
-    width:100%;min-height:auto;margin:0;padding:8mm 8mm 10mm 8mm;
-    box-shadow:none;
-  }
-  @page{size:A4 portrait;margin:0;}
+  .a4-wrap{width:100%;margin:0;padding:8mm 8mm 10mm 8mm;box-shadow:none;}
+  thead{display:table-header-group;}
+  .summary-row,.sig-section,.print-date{page-break-inside:avoid;}
+  @page{size:A4 portrait;margin:10mm 8mm;}
 }
 </style></head><body>
-
 <div class="ctrl-bar">
-  <button class="pbtn pbtn-red" id="btn-pdf" onclick="exportPDF()">
-    ⬇ บันทึก PDF
-  </button>
-  <button class="pbtn pbtn-gray" onclick="window.print()">🖨 พิมพ์โดยตรง</button>
+  <button class="pbtn pbtn-primary" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
   <button class="pbtn pbtn-gray" onclick="window.close()">✕ ปิด</button>
-  <span id="pdf-status"></span>
-  <span style="margin-left:auto;">รายงาน ${oLbl} · ${mLbl} · ${total} ราย</span>
+  <span style="margin-left:auto;">รายงานสรุปดูรถใหม่ · ${oLbl} · ${mLbl} · ${total} ราย</span>
 </div>
-
-<div class="a4-wrap" id="a4-page">
-<div class="a4-content">
-
-  <!-- header -->
-  <div class="rh-row1">
-    <div class="rh-main-title">รายงานการบันทึกเข้าออก</div>
-  </div>
+<div class="a4-wrap">
+  <div class="rh-row1"><div class="rh-main-title">รายงานการบันทึกเข้าออก</div></div>
   <div class="rh-company">บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</div>
   <div class="rh-row3">
     <div class="rh-obj">วัตถุประสงค์เข้าออก : <strong>${oLbl}</strong></div>
     <div class="rh-mon">เดือน : <strong>${mLbl}</strong></div>
   </div>
-
-  <!-- table -->
   <div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th rowspan="2">ลำดับ<br>ที่</th>
-        <th rowspan="2">วันที่<br>บันทึก</th>
-        <th rowspan="2" style="text-align:left;min-width:100px;">ทะเบียนรถ</th>
-        <th rowspan="2">ประเภท<br>เข้าออก</th>
-        <th rowspan="2" style="text-align:left;min-width:80px;">กลุ่มบุคคล<br>เข้าออก</th>
-        <th rowspan="2" style="text-align:left;min-width:90px;">ฝ่าย/ฝ่ายที่<br>ต้องการติดต่อ</th>
-        <th rowspan="2" style="text-align:left;min-width:60px;">วัตถุ<br>ประสงค์</th>
-        <th colspan="2" class="th-in">วันเวลาเริ่มบันทึก</th>
-        <th colspan="2" class="th-out">วันเวลาจบบันทึก</th>
-
-      </tr>
-      <tr>
-        <th class="th-in">วันเวลา</th>
-        <th class="th-in">ผู้บันทึก</th>
-        <th class="th-out">วันเวลา</th>
-        <th class="th-out">ผู้บันทึก</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rows}
-    </tbody>
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">ลำดับ<br>ที่</th>
+          <th rowspan="2">วันที่<br>บันทึก</th>
+          <th rowspan="2" style="text-align:left;min-width:100px;">ทะเบียนรถ</th>
+          <th rowspan="2">ประเภท<br>เข้าออก</th>
+          <th rowspan="2" style="text-align:left;min-width:80px;">กลุ่มบุคคล<br>เข้าออก</th>
+          <th rowspan="2" style="text-align:left;min-width:90px;">ฝ่าย/ฝ่ายที่<br>ต้องการติดต่อ</th>
+          <th rowspan="2" style="text-align:left;min-width:60px;">วัตถุ<br>ประสงค์</th>
+          <th colspan="2" class="th-in">วันเวลาเริ่มบันทึก</th>
+          <th colspan="2" class="th-out">วันเวลาจบบันทึก</th>
+        </tr>
+        <tr>
+          <th class="th-in">วันเวลา</th><th class="th-in">ผู้บันทึก</th>
+          <th class="th-out">วันเวลา</th><th class="th-out">ผู้บันทึก</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
   </div>
-
-  <!-- summary -->
-  <div class="summary-row">
-    <div class="summary-box">จำนวนทั้งสิ้น &nbsp;${total}&nbsp; ราย</div>
-  </div>
-
-  <!-- signatures -->
+  <div class="summary-row"><div class="summary-box">จำนวนทั้งสิ้น &nbsp;${total}&nbsp; ราย</div></div>
   <div class="sig-section">
-    <div class="sig-block">
-      <div class="sig-spacer"></div>
-      <div class="sig-line"></div>
-      <div class="sig-label">ลงชื่อ .....................................................</div>
-      <div class="sig-label" style="font-size:8.5pt;color:#555;margin-top:1mm;">( ผู้รายงาน )</div>
-    </div>
-    <div class="sig-block">
-      <div class="sig-spacer"></div>
-      <div class="sig-line"></div>
-      <div class="sig-label">ลงชื่อ .....................................................</div>
-      <div class="sig-label" style="font-size:8.5pt;color:#555;margin-top:1mm;">( ผู้ตรวจรายงาน )</div>
-    </div>
+    <div class="sig-block"><div class="sig-spacer"></div><div class="sig-line"></div><div class="sig-label">ลงชื่อ .....................................................</div><div class="sig-label" style="font-size:8.5pt;color:#555;margin-top:1mm;">( ผู้รายงาน )</div></div>
+    <div class="sig-block"><div class="sig-spacer"></div><div class="sig-line"></div><div class="sig-label">ลงชื่อ .....................................................</div><div class="sig-label" style="font-size:8.5pt;color:#555;margin-top:1mm;">( ผู้ตรวจรายงาน )</div></div>
   </div>
-
   <div class="print-date">พิมพ์วันที่ ${today}</div>
-
 </div>
-</div><!-- .a4-wrap -->
-
-<script>
-const TH_MONTHS_P=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-function formatDT(s){
-  if(!s||s==='—') return '—';
-  const parts=String(s).split(' ');
-  const dp=parts[0].split('/');
-  if(dp.length<3) return s;
-  const d=String(parseInt(dp[0])).padStart(2,'0');
-  const m=String(parseInt(dp[1])).padStart(2,'0');
-  const y=String(parseInt(dp[2])+543).slice(-2);
-  const time=parts[1]?parts[1].substring(0,5):'';
-  return d+'-'+m+'-'+y+(time?' '+time:'');
-}
-async function exportPDF() {
-  const btn = document.getElementById('btn-pdf');
-  const st  = document.getElementById('pdf-status');
-  btn.disabled = true;
-  btn.textContent = '⏳ กำลังสร้าง PDF...';
-  st.textContent = 'กรุณารอสักครู่...';
-  try {
-    const { jsPDF } = window.jspdf;
-    const el = document.getElementById('a4-page');
-    // A4: 210 x 297 mm
-    const W_MM = 210, H_MM = 297;
-    const scale = 3; // high res
-    const canvas = await html2canvas(el, {
-      scale,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      windowWidth: el.scrollWidth,
-      windowHeight: el.scrollHeight,
-    });
-    const imgData = canvas.toDataURL('image/png');
-    const cW = canvas.width, cH = canvas.height;
-    // Scale image to fit A4 width, multi-page if tall
-    const ratio  = W_MM / (cW / scale * 3.7795); // px -> mm at 96dpi
-    const imgW   = W_MM;
-    const imgH   = (cH / scale) * (W_MM / (cW / scale));
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    let yLeft = imgH;
-    let yPos  = 0;
-    let page  = 0;
-    while (yLeft > 0) {
-      if (page > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, -yPos, imgW, imgH);
-      yPos  += H_MM;
-      yLeft -= H_MM;
-      page++;
-    }
-    const fname = ('รายงาน_' + document.title + '.pdf').replace(/[\/\s]/g,'-');
-    pdf.save(fname);
-    btn.textContent = '✅ PDF สำเร็จ!';
-    st.textContent = '';
-    setTimeout(()=>{ btn.textContent='⬇ บันทึก PDF'; btn.disabled=false; }, 3000);
-  } catch(e) {
-    btn.textContent = '❌ เกิดข้อผิดพลาด';
-    st.textContent = e.message;
-    btn.disabled = false;
-  }
-}
-<\/script>
 </body></html>`;
 
   const w = window.open('', '_blank');
@@ -1230,20 +1078,15 @@ function printReport2() {
   });
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>รายงานแบบที่2_${mLbl}</title>
+<title>รายงานบันทึกเข้าออก_${mLbl}</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;background:#e8ecf0;color:#111;font-size:11px;}
 .ctrl-bar{background:#1a2332;padding:10px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
 .pbtn{padding:7px 20px;font-size:12px;font-family:'Sarabun',sans-serif;border:none;border-radius:6px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
-.pbtn-red{background:#c62828;color:#fff;}.pbtn-gray{background:#546e7a;color:#fff;}
-#pdf-status{color:#ffd600;font-size:12px;font-weight:600;}
-.a4-wrap{width:210mm;min-height:297mm;margin:20px auto;background:#fff;box-shadow:0 4px 32px rgba(0,0,0,.18);padding:10mm 10mm 12mm 10mm;}
-
-/* header */
+.pbtn-primary{background:#1565C0;color:#fff;}.pbtn-gray{background:#546e7a;color:#fff;}
+.a4-wrap{width:210mm;margin:20px auto;background:#fff;box-shadow:0 4px 32px rgba(0,0,0,.18);padding:10mm 10mm 12mm 10mm;}
 .rh-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2mm;}
 .rh-left h1{font-size:15pt;font-weight:700;color:#0D2137;}
 .rh-left h2{font-size:11pt;font-weight:600;color:#1565C0;margin-top:1mm;}
@@ -1252,16 +1095,13 @@ body{font-family:'Sarabun',sans-serif;background:#e8ecf0;color:#111;font-size:11
 .rh-divider{border:none;border-top:2.5px solid #1565C0;margin:2mm 0;}
 .rh-meta{display:flex;justify-content:space-between;font-size:9pt;color:#333;margin-bottom:3mm;padding:1.5mm 0;border-bottom:1px solid #CFD8DC;}
 .rh-meta span strong{color:#0D2137;}
-
-/* stat cards */
 .stat-row{display:flex;gap:6px;margin-bottom:4mm;}
 .stat-card{flex:1;background:#F4F6F9;border:1px solid #DDE3EA;border-radius:6px;padding:4px 8px;text-align:center;}
 .stat-num{font-size:16pt;font-weight:700;line-height:1.1;}
 .stat-lbl{font-size:6.5pt;color:#607D8B;font-weight:600;margin-top:1px;}
-
-/* table */
 .tbl-wrap{width:100%;overflow:hidden;border-radius:4px;border:1px solid #B0BEC5;}
 table{width:100%;border-collapse:collapse;font-size:7pt;}
+thead{display:table-header-group;}
 thead tr:first-child th{background:#0D2137;color:#fff;padding:5px 4px;text-align:center;font-weight:700;font-size:6.5pt;border:1px solid #1565C0;white-space:nowrap;}
 thead tr:nth-child(2) th{padding:3px 4px;text-align:center;font-size:6pt;font-weight:700;border:1px solid rgba(255,255,255,.3);}
 thead .th-in{background:#00838F;}
@@ -1277,7 +1117,6 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
 .c-in{background:#E0F7FA !important;color:#006064;font-weight:600;}
 .c-out{background:#E8F5E9 !important;color:#1B5E20;font-weight:600;}
 .c-by{text-align:center;width:32px;font-size:6pt;}
-
 .summary-row{display:flex;justify-content:flex-end;margin-top:3mm;}
 .summary-box{background:#0D2137;color:#fff;border-radius:5px;padding:5px 16px;font-size:10pt;font-weight:700;}
 .sig-section{display:flex;justify-content:space-between;margin-top:10mm;padding:0 8mm;}
@@ -1286,24 +1125,25 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
 .sig-spacer{height:10mm;}
 .sig-label{font-size:9pt;font-weight:700;color:#0D2137;text-align:center;}
 .print-date{text-align:center;font-size:7pt;color:#aaa;margin-top:4mm;}
-@media print{body{background:#fff;}.ctrl-bar{display:none!important;}.a4-wrap{width:100%;margin:0;padding:8mm;box-shadow:none;}@page{size:A4 portrait;margin:0;}}
+@media print{
+  body{background:#fff;}
+  .ctrl-bar{display:none !important;}
+  .a4-wrap{width:100%;margin:0;padding:8mm;box-shadow:none;}
+  thead{display:table-header-group;}
+  .stat-row{display:flex !important;}
+  .summary-row,.sig-section,.print-date{page-break-inside:avoid;}
+  @page{size:A4 portrait;margin:10mm 8mm;}
+}
 </style></head><body>
 <div class="ctrl-bar">
-  <button class="pbtn pbtn-red" id="btn-pdf" onclick="exportPDF()">⬇ บันทึก PDF</button>
-  <button class="pbtn pbtn-gray" onclick="window.print()">🖨 พิมพ์โดยตรง</button>
+  <button class="pbtn pbtn-primary" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
   <button class="pbtn pbtn-gray" onclick="window.close()">✕ ปิด</button>
-  <span id="pdf-status"></span>
-  <span style="margin-left:auto;color:rgba(255,255,255,.6);font-size:11px;">รายงานแบบที่ 2 · ${mLbl} · ${total} ราย</span>
+  <span style="margin-left:auto;color:rgba(255,255,255,.6);font-size:11px;">รายงานบันทึกเข้าออก · ${mLbl} · ${total} ราย</span>
 </div>
-<div class="a4-wrap" id="a4-page">
+<div class="a4-wrap">
   <div class="rh-top">
-    <div class="rh-left">
-      <h1>รายงานบันทึกการเข้าออก</h1>
-      <h2>บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</h2>
-    </div>
-    <div class="rh-right">
-      <div>วันที่เรียกรายงาน : <strong>${today}</strong></div>
-    </div>
+    <div class="rh-left"><h1>รายงานบันทึกการเข้าออก</h1><h2>บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</h2></div>
+    <div class="rh-right"><div>วันที่เรียกรายงาน : <strong>${today}</strong></div></div>
   </div>
   <hr class="rh-divider">
   <div class="rh-meta">
@@ -1311,8 +1151,6 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
     <span>ทะเบียนรถ : <strong>${plateLbl}</strong></span>
     <span>เดือน : <strong>${mLbl}</strong></span>
   </div>
-
-  <!-- stat cards -->
   <div class="stat-row">
     <div class="stat-card"><div class="stat-num" style="color:#1565C0">${total}</div><div class="stat-lbl">📋 รายการทั้งหมด</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#2E7D32">${inCnt}</div><div class="stat-lbl">🚗 เข้า</div></div>
@@ -1320,7 +1158,6 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
     <div class="stat-card"><div class="stat-num" style="color:#0D2137">${plates}</div><div class="stat-lbl">🔢 ทะเบียนไม่ซ้ำ</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#607D8B">${days}</div><div class="stat-lbl">📅 วันที่มีรายการ</div></div>
   </div>
-
   <div class="tbl-wrap">
     <table>
       <thead>
@@ -1351,32 +1188,6 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
   </div>
   <div class="print-date">พิมพ์วันที่ ${today}</div>
 </div>
-<script>
-async function exportPDF() {
-  const btn = document.getElementById('btn-pdf');
-  const st  = document.getElementById('pdf-status');
-  btn.disabled = true; btn.textContent = '⏳ กำลังสร้าง PDF...'; st.textContent = 'กรุณารอสักครู่...';
-  try {
-    const { jsPDF } = window.jspdf;
-    const el = document.getElementById('a4-page');
-    const W_MM = 210, H_MM = 297, scale = 3;
-    const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff', windowWidth: el.scrollWidth, windowHeight: el.scrollHeight });
-    const imgData = canvas.toDataURL('image/png');
-    const cW = canvas.width, cH = canvas.height;
-    const imgW = W_MM, imgH = (cH / scale) * (W_MM / (cW / scale));
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    let yLeft = imgH, yPos = 0, page = 0;
-    while (yLeft > 0) {
-      if (page > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, -yPos, imgW, imgH);
-      yPos += H_MM; yLeft -= H_MM; page++;
-    }
-    pdf.save('รายงานแบบที่2_${mLbl}.pdf');
-    btn.textContent = '✅ PDF สำเร็จ!'; st.textContent = '';
-    setTimeout(() => { btn.textContent = '⬇ บันทึก PDF'; btn.disabled = false; }, 3000);
-  } catch(e) { btn.textContent = '❌ เกิดข้อผิดพลาด'; st.textContent = e.message; btn.disabled = false; }
-}
-<\/script>
 </body></html>`;
 
   const w = window.open('', '_blank');
@@ -1448,16 +1259,13 @@ function printReport3() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <title>รายงานตามกลุ่มบุคคล_${mLbl}</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;background:#e8ecf0;color:#111;font-size:11px;}
 .ctrl-bar{background:#1a2332;padding:10px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
 .pbtn{padding:7px 20px;font-size:12px;font-family:'Sarabun',sans-serif;border:none;border-radius:6px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
-.pbtn-red{background:#c62828;color:#fff;}.pbtn-gray{background:#546e7a;color:#fff;}
-#pdf-status{color:#ffd600;font-size:12px;font-weight:600;}
-.a4-wrap{width:210mm;min-height:297mm;margin:20px auto;background:#fff;box-shadow:0 4px 32px rgba(0,0,0,.18);padding:10mm 10mm 12mm 10mm;}
+.pbtn-primary{background:#E65100;color:#fff;}.pbtn-gray{background:#546e7a;color:#fff;}
+.a4-wrap{width:210mm;margin:20px auto;background:#fff;box-shadow:0 4px 32px rgba(0,0,0,.18);padding:10mm 10mm 12mm 10mm;}
 .rh-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2mm;}
 .rh-left h1{font-size:15pt;font-weight:700;color:#0D2137;}
 .rh-left h2{font-size:11pt;font-weight:600;color:#1565C0;margin-top:1mm;}
@@ -1472,6 +1280,7 @@ body{font-family:'Sarabun',sans-serif;background:#e8ecf0;color:#111;font-size:11
 .stat-lbl{font-size:6.5pt;color:#607D8B;font-weight:600;margin-top:1px;}
 .tbl-wrap{width:100%;overflow:hidden;border-radius:4px;border:1px solid #B0BEC5;}
 table{width:100%;border-collapse:collapse;font-size:7pt;}
+thead{display:table-header-group;}
 thead tr:first-child th{background:#E65100;color:#fff;padding:5px 4px;text-align:center;font-weight:700;font-size:6.5pt;border:1px solid #BF360C;white-space:nowrap;}
 thead tr:nth-child(2) th{padding:3px 4px;text-align:center;font-size:6pt;font-weight:700;border:1px solid rgba(255,255,255,.3);}
 thead .th-in{background:#00838F;}
@@ -1496,24 +1305,25 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
 .sig-spacer{height:10mm;}
 .sig-label{font-size:9pt;font-weight:700;color:#0D2137;text-align:center;}
 .print-date{text-align:center;font-size:7pt;color:#aaa;margin-top:4mm;}
-@media print{body{background:#fff;}.ctrl-bar{display:none!important;}.a4-wrap{width:100%;margin:0;padding:8mm;box-shadow:none;}@page{size:A4 portrait;margin:0;}}
+@media print{
+  body{background:#fff;}
+  .ctrl-bar{display:none !important;}
+  .a4-wrap{width:100%;margin:0;padding:8mm;box-shadow:none;}
+  thead{display:table-header-group;}
+  .stat-row{display:flex !important;}
+  .summary-row,.sig-section,.print-date{page-break-inside:avoid;}
+  @page{size:A4 portrait;margin:10mm 8mm;}
+}
 </style></head><body>
 <div class="ctrl-bar">
-  <button class="pbtn pbtn-red" id="btn-pdf" onclick="exportPDF()">⬇ บันทึก PDF</button>
-  <button class="pbtn pbtn-gray" onclick="window.print()">🖨 พิมพ์โดยตรง</button>
+  <button class="pbtn pbtn-primary" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
   <button class="pbtn pbtn-gray" onclick="window.close()">✕ ปิด</button>
-  <span id="pdf-status"></span>
   <span style="margin-left:auto;color:rgba(255,255,255,.6);font-size:11px;">รายงานตามกลุ่มบุคคลเข้าออก · ${mLbl} · ${total} ราย</span>
 </div>
-<div class="a4-wrap" id="a4-page">
+<div class="a4-wrap">
   <div class="rh-top">
-    <div class="rh-left">
-      <h1>รายงานบันทึกเข้าออก</h1>
-      <h2>บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</h2>
-    </div>
-    <div class="rh-right">
-      <div>วันที่เรียกรายงาน : <strong>${today}</strong></div>
-    </div>
+    <div class="rh-left"><h1>รายงานบันทึกเข้าออก</h1><h2>บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</h2></div>
+    <div class="rh-right"><div>วันที่เรียกรายงาน : <strong>${today}</strong></div></div>
   </div>
   <hr class="rh-divider">
   <div class="rh-meta">
@@ -1559,32 +1369,6 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
   </div>
   <div class="print-date">พิมพ์วันที่ ${today}</div>
 </div>
-<script>
-async function exportPDF() {
-  const btn = document.getElementById('btn-pdf');
-  const st  = document.getElementById('pdf-status');
-  btn.disabled = true; btn.textContent = '⏳ กำลังสร้าง PDF...'; st.textContent = 'กรุณารอสักครู่...';
-  try {
-    const { jsPDF } = window.jspdf;
-    const el = document.getElementById('a4-page');
-    const W_MM = 210, H_MM = 297, scale = 3;
-    const canvas = await html2canvas(el, { scale, useCORS: true, backgroundColor: '#ffffff', windowWidth: el.scrollWidth, windowHeight: el.scrollHeight });
-    const imgData = canvas.toDataURL('image/png');
-    const cW = canvas.width, cH = canvas.height;
-    const imgW = W_MM, imgH = (cH / scale) * (W_MM / (cW / scale));
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    let yLeft = imgH, yPos = 0, page = 0;
-    while (yLeft > 0) {
-      if (page > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, -yPos, imgW, imgH);
-      yPos += H_MM; yLeft -= H_MM; page++;
-    }
-    pdf.save('รายงานตามกลุ่มบุคคล_${mLbl}.pdf');
-    btn.textContent = '✅ PDF สำเร็จ!'; st.textContent = '';
-    setTimeout(() => { btn.textContent = '⬇ บันทึก PDF'; btn.disabled = false; }, 3000);
-  } catch(e) { btn.textContent = '❌ เกิดข้อผิดพลาด'; st.textContent = e.message; btn.disabled = false; }
-}
-<\/script>
 </body></html>`;
 
   const w = window.open('', '_blank');
