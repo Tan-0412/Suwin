@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>รายงานการเข้าออก — บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด</title>
+<meta name="theme-color" content="#1565C0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="InOut Report">
+<link rel="manifest" href="/Suwin/manifest.json">
+<link rel="apple-touch-icon" href="/Suwin/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/Suwin/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -1661,6 +1669,15 @@ function toast(msg, col) {
   el.style.background = col === 'r' ? '#c62828' : '#1a2332';
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 2500);
+}
+
+// ── PWA Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/Suwin/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW error:', err));
+  });
 }
 </script>
 </body>
