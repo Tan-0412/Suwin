@@ -141,7 +141,15 @@ tr:hover td{background:#f7fafc;}
 /* เพิ่มสีตาม type */
 .bd-new{background:#E8F5E9;color:#1B5E20;}
 
-/* ── LOADING / EMPTY ── */
+/* ── INLINE EDIT ── */
+.btn-edit{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 5px;border-radius:5px;opacity:.5;transition:opacity .15s;}
+.btn-edit:hover{opacity:1;background:#E3F2FD;}
+.btn-save{background:#2E7D32;color:#fff;border:none;cursor:pointer;font-size:11px;padding:3px 8px;border-radius:5px;font-weight:700;font-family:inherit;}
+.btn-cancel{background:#546E7A;color:#fff;border:none;cursor:pointer;font-size:11px;padding:3px 8px;border-radius:5px;font-weight:700;font-family:inherit;margin-left:3px;}
+.edit-input{font-size:11px;padding:3px 6px;border:1.5px solid var(--blue2);border-radius:5px;font-family:inherit;width:100%;box-sizing:border-box;}
+.edit-select{font-size:11px;padding:3px 5px;border:1.5px solid var(--blue2);border-radius:5px;font-family:inherit;width:100%;}
+tr.editing td{background:#FFFDE7 !important;}
+.saving-spin{display:inline-block;width:13px;height:13px;border:2px solid #ccc;border-top-color:var(--blue2);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
 .loader{text-align:center;padding:48px;color:var(--mt);}
 .loader-spin{display:inline-block;width:32px;height:32px;border:3px solid var(--bd);
   border-top-color:var(--blue2);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px;}
@@ -197,7 +205,7 @@ tr:hover td{background:#f7fafc;}
         <button class="btn btn-outline" onclick="copyScript()" style="font-size:11px;padding:4px 10px;">📋 คัดลอก</button>
       </div>
       <pre class="code" id="gs-code">// ═══════════════════════════════════════════════════
-//  รายงานการเข้าออก — Google Apps Script v3
+//  รายงานการเข้าออก — Google Apps Script v4
 //  Sheet: รายชื่อบุคคลเข้าออก
 // ═══════════════════════════════════════════════════
 const SHEET_NAME = 'รายชื่อบุคคลเข้าออก';
@@ -216,13 +224,70 @@ const COL = {
   outBy:   'ผู้บันทึกจบ',
 };
 
+// คอลัมน์ที่อนุญาตให้แก้ไขได้เท่านั้น
+const EDITABLE_COLS = [
+  COL.plate, COL.person, COL.type, COL.group, COL.dept, COL.obj
+];
+
 function doGet(e) {
   const p = e.parameter;
   const action = p.action || '';
-  if (action === 'ping')    return ok({ pong: true });
-  if (action === 'getData') return ok({ rows: getData(p) });
-  if (action === 'getMeta') return ok(getMeta());
+  if (action === 'ping')       return ok({ pong: true });
+  if (action === 'getData')    return ok({ rows: getData(p) });
+  if (action === 'getMeta')    return ok(getMeta());
+  if (action === 'updateRow')  return ok(updateRow(p));
   return ok({ status: 'ready' });
+}
+
+function updateRow(p) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sh = ss.getSheetByName(SHEET_NAME);
+    if (!sh) return { ok: false, error: 'ไม่พบ Sheet' };
+
+    const data = sh.getDataRange().getValues();
+    const hdrRow = findHdrRow(data);
+    const hdrs = data[hdrRow].map(h => String(h).trim());
+
+    // หา row จาก inDT (วันเวลาเริ่มบันทึก) ที่ส่งมาเป็น key
+    const keyInDT = p.keyInDT || '';
+    if (!keyInDT) return { ok: false, error: 'ไม่พบ key' };
+
+    const inDTIdx = hdrs.indexOf(COL.inDT);
+    if (inDTIdx < 0) return { ok: false, error: 'ไม่พบคอลัมน์ ' + COL.inDT };
+
+    // หา row index ที่ตรงกับ keyInDT
+    let targetRowIdx = -1;
+    for (let i = hdrRow + 1; i < data.length; i++) {
+      const cellVal = data[i][inDTIdx];
+      let cellStr = '';
+      if (cellVal instanceof Date) {
+        cellStr = Utilities.formatDate(cellVal, 'Asia/Bangkok', 'dd/MM/yyyy HH:mm:ss');
+      } else {
+        cellStr = String(cellVal).trim();
+      }
+      if (cellStr === keyInDT) { targetRowIdx = i; break; }
+    }
+
+    if (targetRowIdx < 0) return { ok: false, error: 'ไม่พบข้อมูลที่ต้องการแก้ไข' };
+
+    // อัปเดตเฉพาะคอลัมน์ที่อนุญาต
+    const updates = {};
+    EDITABLE_COLS.forEach(col => {
+      if (p[col] !== undefined) updates[col] = p[col];
+    });
+
+    Object.keys(updates).forEach(col => {
+      const colIdx = hdrs.indexOf(col);
+      if (colIdx >= 0) {
+        sh.getRange(targetRowIdx + 1, colIdx + 1).setValue(updates[col]);
+      }
+    });
+
+    return { ok: true, updatedRow: targetRowIdx + 1 };
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
 }
 
 function toYearMonth(v) {
@@ -310,8 +375,6 @@ function getMeta() {
   const hdrRow = findHdrRow(data);
   const hdrs = data[hdrRow].map(h => String(h).trim());
 
-  // หา index วันที่ — เอาเฉพาะที่ match ตรงเป๊ะกับ COL.date หรือ COL.inDT เท่านั้น
-  // ไม่ใช้ includes() เพื่อไม่ให้ match column เวลา-เท่านั้น เช่น 'เริ่มบันทึก'
   const dateIdxList = [];
   const exactDateIdx = hdrs.findIndex(h => h === COL.date);
   const exactInDTIdx = hdrs.findIndex(h => h === COL.inDT);
@@ -323,7 +386,6 @@ function getMeta() {
   const objectives = new Set();
 
   data.slice(hdrRow + 1).forEach(r => {
-    // ลอง parse เดือนจากทุก date column — เจออันแรกที่ได้ผลก็พอ
     for (const idx of dateIdxList) {
       const ym = toYearMonth(r[idx]);
       if (ym) { months.add(ym); break; }
@@ -503,6 +565,7 @@ function ok(data) {
               <th>ผู้บันทึกเริ่ม</th>
               <th>วันเวลาจบบันทึก</th>
               <th>ผู้บันทึกจบ</th>
+              <th>แก้ไข</th>
             </tr>
           </thead>
           <tbody id="tbl-body">
@@ -818,20 +881,22 @@ function renderTable() {
     const inBy    = r['ผู้บันทึกเริ่ม'] || '—';
     const outDT   = formatDT(r['วันเวลาจบบันทึก'] || r['จบการบันทึก'] || '');
     const outBy   = r['ผู้บันทึกจบ'] || '—';
-    const ym      = makeYearMonth(r['วันที่บันทึก'] || r['วันเวลาเริ่มบันทึก'] || '');
     const isIn    = type.includes('เข้า');
-    html += `<tr>
+    const keyInDT = r['วันเวลาเริ่มบันทึก'] || '';
+    const idx     = i;
+    html += `<tr id="row-${i}" data-key="${encodeURIComponent(keyInDT)}">
       <td class="td-num">${i + 1}</td>
       <td style="font-size:11px;">${dayStr}</td>
-      <td class="td-left td-plate">${plate}</td>
-      <td><span class="bd-in" style="${isIn?'':'background:#FFF3E0;color:#E65100;'}">${type}</span></td>
-      <td class="td-left td-grp">${grp}</td>
-      <td class="td-left td-grp">${dept}</td>
-      <td class="td-left"><span class="bd-obj" style="color:#c0392b;">${obj}</span></td>
+      <td class="td-left td-plate" data-field="ทะเบียนรถ">${plate}</td>
+      <td data-field="ประเภทเข้าออก"><span class="bd-in" style="${isIn?'':'background:#FFF3E0;color:#E65100;'}">${type}</span></td>
+      <td class="td-left td-grp" data-field="กลุ่มบุคคลเข้าออก">${grp}</td>
+      <td class="td-left td-grp" data-field="ฝ่าย/ฝ่ายที่ต้องการติดต่อ">${dept}</td>
+      <td class="td-left" data-field="วัตถุประสงค์"><span class="bd-obj" style="color:#c0392b;">${obj}</span></td>
       <td class="td-time">${inDT}</td>
       <td class="td-grp">${inBy}</td>
       <td class="td-time2">${outDT}</td>
       <td class="td-grp">${outBy}</td>
+      <td style="text-align:center;"><button class="btn-edit" onclick="startEdit(${i})" title="แก้ไข">✏️</button></td>
     </tr>`;
   });
   document.getElementById('tbl-body').innerHTML = html;
@@ -1366,6 +1431,107 @@ td{border:1px solid #CFD8DC;padding:3.5px 4px;vertical-align:middle;}
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
+}
+
+// ── INLINE EDIT ──
+function startEdit(i) {
+  const r   = filteredRows[i];
+  const tr  = document.getElementById('row-' + i);
+  if (!tr) return;
+  tr.classList.add('editing');
+
+  const plate  = r['ทะเบียนรถ'] || '';
+  const person = r['บุคคลเข้าออก'] || '';
+  const type   = r['ประเภทเข้าออก'] || '';
+  const grp    = r['กลุ่มบุคคลเข้าออก'] || '';
+  const dept   = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || '';
+  const obj    = r['วัตถุประสงค์'] || '';
+
+  // สร้าง options กลุ่มบุคคล
+  const grpOpts = msData.grp.map(g =>
+    `<option value="${g.value}" ${g.value===grp?'selected':''}>${g.label}</option>`).join('');
+  // สร้าง options วัตถุประสงค์
+  const objOpts = msData.obj.map(o =>
+    `<option value="${o.value}" ${o.value===obj?'selected':''}>${o.label}</option>`).join('');
+
+  tr.innerHTML = `
+    <td class="td-num">${i + 1}</td>
+    <td style="font-size:11px;">${formatDateShort(r['วันที่บันทึก']||'')}</td>
+    <td><input class="edit-input" id="e-plate-${i}" value="${plate}" placeholder="ทะเบียนรถ"></td>
+    <td>
+      <select class="edit-select" id="e-type-${i}">
+        <option value="เข้า" ${type==='เข้า'?'selected':''}>เข้า</option>
+        <option value="ออก" ${type==='ออก'?'selected':''}>ออก</option>
+      </select>
+    </td>
+    <td>
+      <select class="edit-select" id="e-grp-${i}">${grpOpts}</select>
+    </td>
+    <td><input class="edit-input" id="e-dept-${i}" value="${dept}" placeholder="ฝ่าย"></td>
+    <td>
+      <select class="edit-select" id="e-obj-${i}">${objOpts}</select>
+    </td>
+    <td class="td-time">${formatDT(r['วันเวลาเริ่มบันทึก']||'')}</td>
+    <td class="td-grp">${r['ผู้บันทึกเริ่ม']||'—'}</td>
+    <td class="td-time2">${formatDT(r['วันเวลาจบบันทึก']||'')}</td>
+    <td class="td-grp">${r['ผู้บันทึกจบ']||'—'}</td>
+    <td style="text-align:center;white-space:nowrap;">
+      <button class="btn-save" onclick="saveEdit(${i})">✅</button>
+      <button class="btn-cancel" onclick="cancelEdit(${i})">❌</button>
+    </td>`;
+
+  // focus ที่ทะเบียนรถก่อน
+  setTimeout(() => { const el = document.getElementById('e-plate-'+i); if(el) el.focus(); }, 50);
+}
+
+async function saveEdit(i) {
+  const r      = filteredRows[i];
+  const tr     = document.getElementById('row-' + i);
+  const keyInDT = r['วันเวลาเริ่มบันทึก'] || '';
+
+  const newPlate  = document.getElementById('e-plate-' + i)?.value.trim() || '';
+  const newType   = document.getElementById('e-type-'  + i)?.value || '';
+  const newGrp    = document.getElementById('e-grp-'   + i)?.value || '';
+  const newDept   = document.getElementById('e-dept-'  + i)?.value.trim() || '';
+  const newObj    = document.getElementById('e-obj-'   + i)?.value || '';
+
+  // แสดง spinner
+  const saveBtn = tr.querySelector('.btn-save');
+  const cancelBtn = tr.querySelector('.btn-cancel');
+  saveBtn.disabled = true;
+  cancelBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="saving-spin"></span>';
+
+  try {
+    const params = {
+      action: 'updateRow',
+      keyInDT,
+      'ทะเบียนรถ': newPlate,
+      'ประเภทเข้าออก': newType,
+      'กลุ่มบุคคลเข้าออก': newGrp,
+      'ฝ่าย/ฝ่ายที่ต้องการติดต่อ': newDept,
+      'วัตถุประสงค์': newObj,
+    };
+    const d = await callGS(params);
+    if (!d.ok) throw new Error(d.error || 'ไม่สำเร็จ');
+
+    // อัปเดต allRows และ filteredRows ด้วย
+    r['ทะเบียนรถ']                      = newPlate;
+    r['ประเภทเข้าออก']                   = newType;
+    r['กลุ่มบุคคลเข้าออก']              = newGrp;
+    r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ']      = newDept;
+    r['วัตถุประสงค์']                    = newObj;
+
+    toast('✅ บันทึกสำเร็จ!');
+    renderTable();
+  } catch(e) {
+    toast('❌ ' + e.message, 'r');
+    cancelEdit(i);
+  }
+}
+
+function cancelEdit(i) {
+  renderTable();
 }
 
 // ── HELPERS ──
