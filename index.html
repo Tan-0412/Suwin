@@ -672,6 +672,7 @@ function filterTable() {
   });
 
   renderTable();
+  updateStats();
 }
 
 function resetFilters() {
@@ -820,11 +821,11 @@ function renderTable() {
 
 // ── STATS ──
 function updateStats() {
-  const total  = allRows.length;
-  const inCnt  = allRows.filter(r => (r['ประเภทเข้าออก']||'').includes('เข้า')).length;
-  const outCnt = allRows.filter(r => (r['ประเภทเข้าออก']||'').includes('ออก')).length;
-  const plates = new Set(allRows.map(r => r['ทะเบียนรถ']).filter(Boolean)).size;
-  const days   = new Set(allRows.map(r => (r['วันที่บันทึก']||r['วันที่']||'').split(' ')[0]).filter(Boolean)).size;
+  const total  = filteredRows.length;
+  const inCnt  = filteredRows.filter(r => (r['ประเภทเข้าออก']||'').includes('เข้า')).length;
+  const outCnt = filteredRows.filter(r => (r['ประเภทเข้าออก']||'').includes('ออก')).length;
+  const plates = new Set(filteredRows.map(r => r['ทะเบียนรถ']).filter(Boolean)).size;
+  const days   = new Set(filteredRows.map(r => (r['วันที่บันทึก']||r['วันที่']||'').split(' ')[0]).filter(Boolean)).size;
 
   document.getElementById('stat-row').innerHTML = `
     <div class="stat-card"><div class="stat-num" style="color:var(--blue);">${total}</div><div class="stat-lbl">📋 รายการทั้งหมด</div></div>
