@@ -661,7 +661,6 @@ async function loadReport() {
     buildMsOptions('grp');
     buildMsOptions('person');
     filterTable();
-    updateStats();
     updateTitle();
   } catch(e) {
     setConn(false);
@@ -798,13 +797,6 @@ document.addEventListener('click', e => {
 
 // ── RENDER ──
 function renderTable() {
-  const q = document.getElementById('inp-search').value.trim().toLowerCase();
-  filteredRows = q
-    ? allRows.filter(r =>
-        Object.values(r).some(v => String(v).toLowerCase().includes(q))
-      )
-    : allRows;
-
   document.getElementById('rec-count').textContent = filteredRows.length + ' รายการ';
 
   if (filteredRows.length === 0) {
