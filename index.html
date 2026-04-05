@@ -887,7 +887,10 @@ function renderTable() {
     html += `<tr id="row-${i}" data-key="${encodeURIComponent(keyInDT)}">
       <td class="td-num">${i + 1}</td>
       <td style="font-size:11px;">${dayStr}</td>
-      <td class="td-left td-plate" data-field="ทะเบียนรถ">${plate}</td>
+      <td class="td-left td-plate" data-field="ทะเบียนรถ" style="line-height:1.3;">
+        <div style="font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.5px;">${plate}</div>
+        <div style="font-size:10px;color:#C62828;font-weight:500;">${person !== '—' ? person : ''}</div>
+      </td>
       <td data-field="ประเภทเข้าออก"><span class="bd-in" style="${isIn?'':'background:#FFF3E0;color:#E65100;'}">${type}</span></td>
       <td class="td-left td-grp" data-field="กลุ่มบุคคลเข้าออก">${grp}</td>
       <td class="td-left td-grp" data-field="ฝ่าย/ฝ่ายที่ต้องการติดต่อ">${dept}</td>
