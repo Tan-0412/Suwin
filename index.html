@@ -520,6 +520,15 @@ function ok(data) {
         </div>
       </div>
     </div>
+    <!-- วันที่บันทึก -->
+    <div class="ctrl-grp">
+      <label>วันที่บันทึก (ตั้งแต่)</label>
+      <input type="date" id="inp-date-from" onchange="filterTable()" style="min-width:140px;">
+    </div>
+    <div class="ctrl-grp">
+      <label>วันที่บันทึก (ถึง)</label>
+      <input type="date" id="inp-date-to" onchange="filterTable()" style="min-width:140px;">
+    </div>
     <!-- ค้นหา -->
     <div class="ctrl-grp">
       <label>ค้นหา</label>
@@ -746,6 +755,16 @@ function filterTable() {
   const selGrps = msState.grp;
   const selPers = msState.person;
   const selObjs = msState.obj;
+  const dateFrom = document.getElementById('inp-date-from').value; // yyyy-MM-dd
+  const dateTo   = document.getElementById('inp-date-to').value;   // yyyy-MM-dd
+
+  // แปลง dd/MM/yyyy → yyyy-MM-dd เพื่อเปรียบเทียบ
+  function toIso(dateStr) {
+    if (!dateStr) return '';
+    const p = String(dateStr).split(' ')[0].split('/');
+    if (p.length < 3) return '';
+    return p[2].substring(0,4) + '-' + String(parseInt(p[1])).padStart(2,'0') + '-' + String(parseInt(p[0])).padStart(2,'0');
+  }
 
   // หา key จริงจาก row แรก
   filteredRows = allRows.filter(r => {
@@ -761,6 +780,12 @@ function filterTable() {
       const v = (r['วัตถุประสงค์'] || '').trim();
       if (!selObjs.has(v)) return false;
     }
+    if (dateFrom || dateTo) {
+      const iso = toIso(r['วันที่บันทึก'] || r['วันที่'] || r['วันเวลาเริ่มบันทึก'] || '');
+      if (!iso) return false;
+      if (dateFrom && iso < dateFrom) return false;
+      if (dateTo   && iso > dateTo)   return false;
+    }
     if (q) {
       return Object.values(r).some(v => String(v).toLowerCase().includes(q));
     }
@@ -775,6 +800,8 @@ function resetFilters() {
   msState.grp.clear(); msState.person.clear(); msState.obj.clear();
   ['grp','person','obj'].forEach(k => { updateMsBtn(k); buildMsOptions(k); });
   document.getElementById('inp-search').value = '';
+  document.getElementById('inp-date-from').value = '';
+  document.getElementById('inp-date-to').value = '';
   filterTable();
 }
 
