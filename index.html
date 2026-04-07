@@ -206,38 +206,39 @@ tr.editing td{background:#FFFDE7 !important;}
   border-radius:10px;font-size:13px;z-index:999;display:none;box-shadow:0 4px 16px rgba(0,0,0,.25);}
 
 /* ── MODAL (Admin) ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:12px;}
 .modal-overlay.open{display:flex;}
-.modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;
+.modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;overflow-x:hidden;
   box-shadow:0 20px 60px rgba(0,0,0,.3);}
-.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.modal-hdr h2{font-size:17px;font-weight:700;color:var(--navy);}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.modal-hdr h2{font-size:16px;font-weight:700;color:var(--navy);}
 .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--mt);padding:2px 6px;border-radius:6px;}
 .modal-close:hover{background:var(--bg);}
-.form-row{display:flex;gap:10px;margin-bottom:12px;}
-.form-grp{flex:1;display:flex;flex-direction:column;gap:4px;}
-.form-grp label{font-size:11px;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.4px;}
-.form-grp input,.form-grp select{padding:8px 10px;border-radius:8px;border:1.5px solid var(--bd);
-  font-size:13px;font-family:inherit;color:var(--tx);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.form-grp{display:flex;flex-direction:column;gap:4px;}
+.form-grp label{font-size:10px;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.4px;}
+.form-grp input,.form-grp select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--bd);
+  font-size:12px;font-family:inherit;color:var(--tx);width:100%;}
 .form-grp input:focus,.form-grp select:focus{outline:none;border-color:var(--blue2);}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
 .btn-danger{background:#C62828;color:#fff;}.btn-danger:hover{background:#b71c1c;}
 .btn-success{background:#2E7D32;color:#fff;}.btn-success:hover{background:#1B5E20;}
+@media(max-width:520px){.form-row{grid-template-columns:1fr;}}
 
 /* User Table in Admin */
-.user-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
-.user-table th{padding:7px 10px;background:#f0f4f8;border-bottom:2px solid var(--bd);
-  font-size:10px;font-weight:700;color:var(--mt);text-transform:uppercase;text-align:left;}
-.user-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.user-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;table-layout:fixed;}
+.user-table th{padding:6px 8px;background:#f0f4f8;border-bottom:2px solid var(--bd);
+  font-size:9px;font-weight:700;color:var(--mt);text-transform:uppercase;text-align:left;white-space:nowrap;overflow:hidden;}
+.user-table td{padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;}
 .user-table tr:last-child td{border-bottom:none;}
 .user-table tr:hover td{background:#f7fafc;}
-.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.status-badge{display:inline-block;padding:2px 6px;border-radius:8px;font-size:9px;font-weight:700;white-space:nowrap;}
 .status-active{background:#E8F5E9;color:#2E7D32;}
 .status-inactive{background:#FFEBEE;color:#C62828;}
 .role-admin{background:#EDE7F6;color:#512DA8;}
 .role-user{background:#E3F2FD;color:#1565C0;}
-.action-btn{background:none;border:1px solid var(--bd);border-radius:6px;padding:3px 8px;
-  font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;}
+.action-btn{background:none;border:1px solid var(--bd);border-radius:6px;padding:3px 6px;
+  font-size:10px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap;}
 .action-btn:hover{background:var(--bg);}
 .action-btn.danger{color:var(--red);border-color:#FFCDD2;}
 .action-btn.danger:hover{background:#FFEBEE;}
@@ -465,8 +466,8 @@ tr.editing td{background:#FFFDE7 !important;}
     </div>
 
     <!-- เพิ่ม User ใหม่ -->
-    <div style="background:#F8F9FA;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid var(--bd);">
-      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;">➕ เพิ่ม User ใหม่</div>
+    <div style="background:#F8F9FA;border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid var(--bd);">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px;">➕ เพิ่ม User ใหม่</div>
       <div class="form-row">
         <div class="form-grp">
           <label>Username</label>
@@ -503,8 +504,8 @@ tr.editing td{background:#FFFDE7 !important;}
     </div>
 
     <!-- เปลี่ยน Password -->
-    <div style="background:#FFF8E1;border-radius:10px;padding:16px;margin-top:16px;border:1px solid #FFE082;">
-      <div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:10px;">🔑 เปลี่ยน Password</div>
+    <div style="background:#FFF8E1;border-radius:10px;padding:14px;margin-top:14px;border:1px solid #FFE082;">
+      <div style="font-size:12px;font-weight:700;color:#E65100;margin-bottom:10px;">🔑 เปลี่ยน Password</div>
       <div class="form-row">
         <div class="form-grp">
           <label>Username ที่ต้องการเปลี่ยน</label>
@@ -877,7 +878,7 @@ function renderTable() {
       <td class="td-grp">${inBy}</td>
       <td class="td-time2">${outDT}</td>
       <td class="td-grp">${outBy}</td>
-      <td style="text-align:center;"><button class="btn-edit" onclick="startEdit(${i})" title="แก้ไข">✏️</button></td>
+      <td style="text-align:center;">${currentRole === 'admin' ? `<button class="btn-edit" onclick="startEdit(${i})" title="แก้ไข">✏️</button>` : '—'}</td>
     </tr>`;
   });
   document.getElementById('tbl-body').innerHTML = html;
@@ -925,7 +926,7 @@ async function loadUserList() {
     if (res.error) { wrap.innerHTML = '<div style="color:var(--red);padding:10px;font-size:12px;">❌ ' + res.error + '</div>'; return; }
     const users = res.users || [];
     if (users.length === 0) { wrap.innerHTML = '<div style="color:var(--mt);padding:10px;font-size:12px;">ยังไม่มี User</div>'; return; }
-    let html = '<table class="user-table"><thead><tr><th>Username</th><th>ชื่อ</th><th>Role</th><th>Status</th><th>Login ล่าสุด</th><th>จัดการ</th></tr></thead><tbody>';
+    let html = '<table class="user-table"><colgroup><col style="width:18%"><col style="width:22%"><col style="width:14%"><col style="width:14%"><col style="width:18%"><col style="width:14%"></colgroup><thead><tr><th>Username</th><th>ชื่อ</th><th>Role</th><th>Status</th><th>Login ล่าสุด</th><th>จัดการ</th></tr></thead><tbody>';
     users.forEach(u => {
       const statusBadge = u.status === 'active'
         ? '<span class="status-badge status-active">✅ ใช้งาน</span>'
@@ -934,17 +935,17 @@ async function loadUserList() {
         ? '<span class="status-badge role-admin">👑 Admin</span>'
         : '<span class="status-badge role-user">👤 User</span>';
       html += `<tr>
-        <td><strong>${u.username}</strong></td>
-        <td>${u.fullName}</td>
+        <td><strong style="font-size:11px;">${u.username}</strong></td>
+        <td style="font-size:11px;">${u.fullName}</td>
         <td>${roleBadge}</td>
         <td>${statusBadge}</td>
-        <td style="font-size:11px;color:var(--mt);">${u.lastLogin || '—'}</td>
+        <td style="font-size:10px;color:var(--mt);">${u.lastLogin || '—'}</td>
         <td style="white-space:nowrap;">
-          <button class="action-btn" onclick="doToggleStatus('${u.username}','${u.status}')" title="เปิด/ปิดบัญชี">
-            ${u.status === 'active' ? '🚫 ระงับ' : '✅ เปิด'}
+          <button class="action-btn" onclick="doToggleStatus('${u.username}','${u.status}')">
+            ${u.status === 'active' ? '🚫' : '✅'}
           </button>
-          <button class="action-btn" onclick="prefillChangePassword('${u.username}')" title="เปลี่ยน Password" style="margin-left:4px;">🔑</button>
-          ${u.username !== 'admin' ? `<button class="action-btn danger" onclick="doDeleteUser('${u.username}')" style="margin-left:4px;" title="ลบ User">🗑️</button>` : ''}
+          <button class="action-btn" onclick="prefillChangePassword('${u.username}')" style="margin-left:3px;">🔑</button>
+          ${u.username !== 'admin' ? `<button class="action-btn danger" onclick="doDeleteUser('${u.username}')" style="margin-left:3px;">🗑️</button>` : ''}
         </td>
       </tr>`;
     });
