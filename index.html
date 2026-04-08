@@ -419,7 +419,7 @@ tr.editing td{background:#FFFDE7 !important;}
       </div>
       <!-- ปุ่ม Admin จัดการ User — แสดงเฉพาะ Admin -->
       <button class="btn btn-admin" id="btn-admin" onclick="openAdminModal()" style="display:none;">👤 จัดการ User</button>
-      <button class="btn btn-outline" onclick="showSetup()">⚙️ ตั้งค่า</button>
+      <button class="btn btn-outline" id="btn-setup" onclick="showSetup()" style="display:none;">⚙️ ตั้งค่า</button>
     </div>
   </div>
 
@@ -566,9 +566,10 @@ function showApp() {
   // แสดงชื่อ user ใน topbar
   document.getElementById('tb-username').textContent = currentName || currentUsername || '—';
   document.getElementById('tb-role-badge').textContent = currentRole === 'admin' ? 'Admin' : 'User';
-  // แสดงปุ่ม Admin ถ้าเป็น admin
+  // แสดงปุ่ม Admin และ ตั้งค่า ถ้าเป็น admin
   if (currentRole === 'admin') {
     document.getElementById('btn-admin').style.display = '';
+    document.getElementById('btn-setup').style.display = '';
   }
   if (gsUrl) {
     showMain();
