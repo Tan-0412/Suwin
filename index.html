@@ -1093,10 +1093,13 @@ function printReport() {
   const total = filteredRows.length;
   const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
   let rows = '';
-  filteredRows.forEach((r, i) => {
+  // เรียงจากวันที่น้อยไปมาก (เก่า → ใหม่)
+  const sortedRows = [...filteredRows].sort((a, b) =>
+    parseDateTime(a['วันเวลาเริ่มบันทึก'] || a['วันที่บันทึก'] || a['วันที่']) -
+    parseDateTime(b['วันเวลาเริ่มบันทึก'] || b['วันที่บันทึก'] || b['วันที่']));
+  sortedRows.forEach((r, i) => {
     const dayStr = formatDateShort(r['วันที่บันทึก'] || r['วันที่'] || '');
     const plate  = r['ทะเบียนรถ'] || '—';
-    const type   = findCol(r,'ประเภทเข้าออก','ประเภท') || '—';
     const grp    = r['กลุ่มบุคคลเข้าออก'] || findCol(r,'กลุ่มบุคคล') || '—';
     const dept   = r['ฝ่าย/ฝ่ายที่ต้องการติดต่อ'] || findCol(r,'ฝ่าย') || '—';
     const obj    = findCol(r,'วัตถุประสงค์','วัตถุ') || '—';
@@ -1105,7 +1108,7 @@ function printReport() {
     const outDT  = formatDT(findCol(r,'วันเวลาจบบันทึก','จบบันทึก')) || '—';
     const outBy  = findCol(r,'ผู้บันทึกจบ') || '—';
     const bg = i % 2 === 1 ? '#EEF4FB' : '#ffffff';
-    rows += `<tr style="background:${bg};"><td class="c-num">${i+1}</td><td class="c-date">${dayStr}</td><td class="c-left c-plate">${plate}</td><td class="c-type">${type}</td><td class="c-left">${grp}</td><td class="c-left">${dept}</td><td class="c-left c-obj">${obj}</td><td class="c-dt c-in">${inDT}</td><td class="c-by">${inBy}</td><td class="c-dt c-out">${outDT}</td><td class="c-by">${outBy}</td></tr>`;
+    rows += `<tr style="background:${bg};"><td class="c-num">${i+1}</td><td class="c-date">${dayStr}</td><td class="c-left c-plate">${plate}</td><td class="c-left">${grp}</td><td class="c-left">${dept}</td><td class="c-left c-obj">${obj}</td><td class="c-dt c-in">${inDT}</td><td class="c-by">${inBy}</td><td class="c-dt c-out">${outDT}</td><td class="c-by">${outBy}</td></tr>`;
   });
   openPrintWindow('รายงานสรุปดูรถใหม่_' + mLbl, buildPrintHtml1(mLbl, oLbl, total, today, rows));
 }
@@ -1192,6 +1195,7 @@ function buildPrintHtml1(mLbl, oLbl, total, today, rows) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงานสรุปดูรถใหม่</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>${PRINT_CSS_BASE}
+.c-plate{width:135px;white-space:nowrap;}
 .rh-main-title{font-size:14pt;font-weight:700;color:#0D2137;border-bottom:2.5px solid #1565C0;padding-bottom:1mm;margin-bottom:1mm;}
 .rh-company{font-size:11pt;font-weight:600;color:#1565C0;margin-bottom:2mm;}
 .rh-row3{display:flex;justify-content:space-between;border-top:1px solid #CFD8DC;border-bottom:1px solid #CFD8DC;padding:2mm 0;margin-bottom:3mm;}
@@ -1205,7 +1209,7 @@ thead .th-in{background:#00838F;}thead .th-out{background:#2E7D32;}
 <div class="rh-company">บริษัท อีซูซุคิงส์ยนต์กรุงเทพ จำกัด (สาขาสุวินทวงศ์)</div>
 <div class="rh-row3"><div style="font-size:10pt;">วัตถุประสงค์ : <strong style="color:#c0392b;">${oLbl}</strong></div><div style="font-size:10pt;">เดือน : <strong style="color:#1565C0;">${mLbl}</strong></div></div>
 <div class="tbl-wrap"><table>
-<thead><tr><th rowspan="2">ลำดับ</th><th rowspan="2">วันที่บันทึก</th><th rowspan="2" style="text-align:left;">ทะเบียนรถ</th><th rowspan="2">ประเภทเข้าออก</th><th rowspan="2" style="text-align:left;">กลุ่มบุคคลเข้าออก</th><th rowspan="2" style="text-align:left;">ฝ่าย/ที่ต้องการติดต่อ</th><th rowspan="2" style="text-align:left;">วัตถุประสงค์</th><th colspan="2" class="th-in">วันเวลาเริ่มบันทึก</th><th colspan="2" class="th-out">วันเวลาจบบันทึก</th></tr>
+<thead><tr><th rowspan="2">ลำดับ</th><th rowspan="2">วันที่บันทึก</th><th rowspan="2" style="text-align:left;">ทะเบียนรถ</th><th rowspan="2" style="text-align:left;">กลุ่มบุคคลเข้าออก</th><th rowspan="2" style="text-align:left;">ฝ่าย/ที่ต้องการติดต่อ</th><th rowspan="2" style="text-align:left;">วัตถุประสงค์</th><th colspan="2" class="th-in">วันเวลาเริ่มบันทึก</th><th colspan="2" class="th-out">วันเวลาจบบันทึก</th></tr>
 <tr><th class="th-in">วันเวลา</th><th class="th-in">ผู้บันทึก</th><th class="th-out">วันเวลา</th><th class="th-out">ผู้บันทึก</th></tr></thead>
 <tbody>${rows}</tbody></table></div>
 <div style="display:flex;justify-content:flex-end;margin-top:3mm;"><div class="summary-box">จำนวนทั้งสิ้น ${total} ราย</div></div>
