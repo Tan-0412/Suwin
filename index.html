@@ -189,6 +189,7 @@ tr:hover td{background:#f7fafc;}
 /* ── INLINE EDIT ── */
 .btn-edit{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 5px;border-radius:5px;opacity:.5;transition:opacity .15s;}
 .btn-edit:hover{opacity:1;background:#E3F2FD;}
+.btn-del:hover{opacity:1;background:#FFEBEE;}
 .btn-save{background:#2E7D32;color:#fff;border:none;cursor:pointer;font-size:11px;padding:3px 8px;border-radius:5px;font-weight:700;font-family:inherit;}
 .btn-cancel{background:#546E7A;color:#fff;border:none;cursor:pointer;font-size:11px;padding:3px 8px;border-radius:5px;font-weight:700;font-family:inherit;margin-left:3px;}
 .edit-input{font-size:11px;padding:3px 6px;border:1.5px solid var(--blue2);border-radius:5px;font-family:inherit;width:100%;box-sizing:border-box;}
@@ -895,7 +896,7 @@ function renderTable() {
       <td class="td-grp">${inBy}</td>
       <td class="td-time2">${outDT}</td>
       <td class="td-grp">${outBy}</td>
-      <td style="text-align:center;">${currentRole === 'admin' ? `<button class="btn-edit" onclick="startEdit(${i})" title="แก้ไข">✏️</button>` : '—'}</td>
+      <td style="text-align:center;">${currentRole === 'admin' ? `<button class="btn-edit" onclick="startEdit(${i})" title="แก้ไข">✏️</button><button class="btn-edit btn-del" onclick="doDeleteRow(${i})" title="ลบรายการนี้">🗑️</button>` : '—'}</td>
     </tr>`;
   });
   document.getElementById('tbl-body').innerHTML = html;
@@ -1094,6 +1095,31 @@ async function saveEdit(i) {
   } catch(e) { toast('❌ ' + e.message, 'r'); cancelEdit(i); }
 }
 function cancelEdit(i) { renderTable(); }
+
+async function doDeleteRow(i) {
+  if (currentRole !== 'admin') return;
+  const r = filteredRows[i];
+  if (!r) return;
+  const keyInDT = r['วันเวลาเริ่มบันทึก'] || '';
+  const plate   = r['ทะเบียนรถ'] || '';
+  if (!keyInDT) { toast('❌ ไม่พบรหัสรายการ ลบไม่ได้', 'r'); return; }
+  if (!confirm('⚠️ ต้องการลบรายการนี้ถาวรใช่ไหม?\n\nทะเบียน: ' + plate +
+      '\nวันเวลาเริ่มบันทึก: ' + formatDT(keyInDT) + '\n\nไม่สามารถกู้คืนได้!')) return;
+  const tr = document.getElementById('row-' + i);
+  const btn = tr && tr.querySelector('.btn-del');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="saving-spin"></span>'; }
+  try {
+    const d = await callGS({ action: 'deleteRow', keyInDT, 'ทะเบียนรถ': plate });
+    if (!d.ok) throw new Error(d.error || 'ไม่สำเร็จ');
+    const idx = allRows.indexOf(r);
+    if (idx > -1) allRows.splice(idx, 1);
+    toast('✅ ลบรายการสำเร็จ');
+    filterTable();
+  } catch(e) {
+    toast('❌ ' + e.message, 'r');
+    renderTable();
+  }
+}
 
 // ── PRINT DROPDOWN ──
 function togglePrintMenu() { document.getElementById('print-menu').classList.toggle('open'); }
